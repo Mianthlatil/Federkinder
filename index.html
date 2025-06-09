@@ -1,17 +1,30 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Dune Map</title>
+  <title>Interaktive Karte mit Koordinaten</title>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <style>
     html, body, #map { height: 100%; margin: 0; }
+    .coords-box {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      background: rgba(0,0,0,0.7);
+      color: #fff;
+      padding: 5px 10px;
+      font-family: monospace;
+      border-radius: 5px;
+      z-index: 1000;
+    }
   </style>
 </head>
 <body>
   <div id="map"></div>
+  <div id="coords" class="coords-box">X: –, Y: –</div>
+
   <script>
     var map = L.map('map', {
       crs: L.CRS.Simple,
@@ -19,19 +32,28 @@
       maxZoom: 4
     });
 
-    // Bildgröße anpassen, falls dein Bild größer ist
     const bounds = [[0, 0], [1024, 1024]];
     L.imageOverlay('map.png', bounds).addTo(map);
     map.fitBounds(bounds);
+
+    // Mousemove → Koordinaten anzeigen
+    map.on('mousemove', function (e) {
+      document.getElementById('coords').textContent = 
+        `X: ${e.latlng.lat.toFixed(1)}, Y: ${e.latlng.lng.toFixed(1)}`;
+    });
+
+    // Klick → Koordinaten in Konsole loggen
+    map.on('click', function (e) {
+      console.log(`Klick bei: [${e.latlng.lat}, ${e.latlng.lng}]`);
+    });
 
     // Marker aus JSON laden
     fetch('markers.json')
       .then(response => response.json())
       .then(data => {
         data.forEach(marker => {
-          L.marker(marker.coords)
-            .addTo(map)
-            .bindPopup(`<strong>${marker.name}</strong><br>${marker.description}`);
+          const popup = `<strong>${marker.name}</strong><br>${marker.description}<br><em>X: ${marker.coords[0]}, Y: ${marker.coords[1]}</em>`;
+          L.marker(marker.coords).addTo(map).bindPopup(popup);
         });
       })
       .catch(err => console.error('Fehler beim Laden der Marker:', err));
