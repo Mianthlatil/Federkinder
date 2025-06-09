@@ -1,0 +1,11 @@
+[
+  {
+    "name": "Guild Base",
+    "coords": [300, 700],
+    "description": "Hier ist eine Basis im Norden."
+  },
+  {
+    "name": "Start Region",
+    "coords": [600, 400],
+    "description": "Lagerplatz für Ressourcen."
+  }
