@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Marker Vorschläge Admin</title>
+  <meta charset="utf-8" />
+  <style>
+    body { font-family: sans-serif; margin: 20px; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ccc; padding: 8px; }
+    button { margin-right: 5px; }
+  </style>
+</head>
+<body>
+  <h1>Marker Vorschläge verwalten</h1>
+  <table>
+    <thead>
+      <tr><th>Name</th><th>Beschreibung</th><th>Koordinaten (X,Y)</th><th>Aktion</th></tr>
+    </thead>
+    <tbody id="suggestionsBody"></tbody>
+  </table>
+
+  <script>
+    async function loadSuggestions() {
+      const res = await fetch('/api/suggestions');
+      const suggestions = await res.json();
+      const tbody = document.getElementById('suggestionsBody');
+      tbody.innerHTML = '';
+      for (const s of suggestions) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${s.name}</td>
+          <td>${s.description}</td>
+          <td>${s.coords[0]}, ${s.coords[1]}</td>
+          <td>
+            <button onclick="accept(${s.id})">Akzeptieren</button>
+            <button onclick="reject(${s.id})">Ablehnen</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      }
+    }
+
+    async function accept(id) {
+      await fetch('/api/suggestions/accept', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({id})
+      });
+      loadSuggestions();
+    }
+
+    async function reject(id) {
+      await fetch('/api/suggestions/reject', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({id})
+      });
+      loadSuggestions();
+    }
+
+    loadSuggestions();
+  </script>
+</body>
+</html>
