@@ -1,14 +1,13 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Meine Karte</title>
+  <title>Dune Map</title>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <style>
-    #map { height: 100vh; margin: 0; }
-    body { margin: 0; }
+    html, body, #map { height: 100%; margin: 0; }
   </style>
 </head>
 <body>
@@ -20,13 +19,22 @@
       maxZoom: 4
     });
 
-    var bounds = [[0,0], [1024,1024]]; // Größe des Bildes anpassen!
-    var image = L.imageOverlay('map.png', bounds).addTo(map);
-
+    // Bildgröße anpassen, falls dein Bild größer ist
+    const bounds = [[0, 0], [1024, 1024]];
+    L.imageOverlay('map.png', bounds).addTo(map);
     map.fitBounds(bounds);
 
-    // Beispielmarker
-    L.marker([512, 512]).addTo(map).bindPopup("Marker in der Mitte");
+    // Marker aus JSON laden
+    fetch('markers.json')
+      .then(response => response.json())
+      .then(data => {
+        data.forEach(marker => {
+          L.marker(marker.coords)
+            .addTo(map)
+            .bindPopup(`<strong>${marker.name}</strong><br>${marker.description}`);
+        });
+      })
+      .catch(err => console.error('Fehler beim Laden der Marker:', err));
   </script>
 </body>
 </html>
