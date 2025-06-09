@@ -1,15 +1,37 @@
-<h3>Marker vorschlagen</h3>
-<form id="suggestForm">
-  <label>Name:<br><input type="text" name="name" required></label><br>
-  <label>Beschreibung:<br><textarea name="description" required></textarea></label><br>
-  <label>X Koordinate:<br><input type="number" name="x" required></label><br>
-  <label>Y Koordinate:<br><input type="number" name="y" required></label><br>
-  <button type="submit">Vorschlag senden</button>
-</form>
-<div id="formMessage"></div>
+<button id="newMarkerBtn">New Marker</button>
+
+<div id="markerForm" style="display:none; position: fixed; top: 20%; left: 50%; transform: translateX(-50%);
+ background: white; border: 1px solid #ccc; padding: 20px; z-index: 1001;">
+  <h3>Neuen Marker vorschlagen</h3>
+  <form id="newMarkerForm">
+    <label>Name:<br><input type="text" name="name" required></label><br>
+    <label>Beschreibung:<br><textarea name="description" required></textarea></label><br>
+    <label>X Koordinate:<br><input type="number" name="x" step="0.1" required></label><br>
+    <label>Y Koordinate:<br><input type="number" name="y" step="0.1" required></label><br>
+    <button type="submit">Senden</button>
+    <button type="button" id="cancelBtn">Abbrechen</button>
+  </form>
+  <div id="formMessage"></div>
+</div>
 
 <script>
-  document.getElementById('suggestForm').addEventListener('submit', async (e) => {
+  const webhookUrl = 'DEINE_DISCORD_WEBHOOK_URL_HIER'; // Hier deine Discord Webhook URL einfügen
+
+  const newMarkerBtn = document.getElementById('newMarkerBtn');
+  const markerForm = document.getElementById('markerForm');
+  const cancelBtn = document.getElementById('cancelBtn');
+  const formMessage = document.getElementById('formMessage');
+
+  newMarkerBtn.onclick = () => {
+    markerForm.style.display = 'block';
+    formMessage.textContent = '';
+  };
+
+  cancelBtn.onclick = () => {
+    markerForm.style.display = 'none';
+  };
+
+  document.getElementById('newMarkerForm').onsubmit = async (e) => {
     e.preventDefault();
     const form = e.target;
     const data = {
@@ -18,17 +40,23 @@
       x: form.x.value,
       y: form.y.value
     };
+
+    const content = `Neuer Marker Vorschlag:\n**${data.name}**\n${data.description}\nKoordinaten: X=${data.x}, Y=${data.y}`;
+
     try {
-      const res = await fetch('/api/suggest', {
+      const res = await fetch(webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+        body: JSON.stringify({ content })
       });
-      const json = await res.json();
-      document.getElementById('formMessage').textContent = json.message || 'Fehler';
-      form.reset();
+      if (res.ok) {
+        formMessage.textContent = 'Vorschlag gesendet!';
+        form.reset();
+      } else {
+        formMessage.textContent = 'Fehler beim Senden!';
+      }
     } catch (err) {
-      document.getElementById('formMessage').textContent = 'Fehler beim Senden';
+      formMessage.textContent = 'Fehler beim Senden!';
     }
-  });
+  };
 </script>
