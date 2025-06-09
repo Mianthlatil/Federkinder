@@ -95,15 +95,16 @@
     });
 
     // Marker Icon (klein und simpel)
-    const smallSvgIcon = L.divIcon({
-      className: '',
-      html: `<svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="10" cy="10" r="8" fill="red" stroke="black" stroke-width="1"/>
-             </svg>`,
-      iconSize: [10, 10],
-      iconAnchor: [5, 5],
-      popupAnchor: [0, -5]
-    });
+const smallSvgIcon = L.divIcon({
+  className: '',
+  html: `<svg width="12" height="12" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="10" cy="10" r="8" fill="red" stroke="black" stroke-width="1"/>
+         </svg>`,
+  iconSize: [12, 12],
+  iconAnchor: [6, 6],
+  popupAnchor: [0, -6]
+});
+
 
     const leafletMarkers = [];
     const markerList = document.getElementById('markerList');
