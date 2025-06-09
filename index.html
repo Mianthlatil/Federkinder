@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Interaktive Karte mit Koordinaten</title>
+  <title>Dune Map</title>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
@@ -36,18 +36,15 @@
     L.imageOverlay('map.png', bounds).addTo(map);
     map.fitBounds(bounds);
 
-    // Mousemove → Koordinaten anzeigen
     map.on('mousemove', function (e) {
       document.getElementById('coords').textContent = 
         `X: ${e.latlng.lat.toFixed(1)}, Y: ${e.latlng.lng.toFixed(1)}`;
     });
 
-    // Klick → Koordinaten in Konsole loggen
     map.on('click', function (e) {
       console.log(`Klick bei: [${e.latlng.lat}, ${e.latlng.lng}]`);
     });
 
-    // Marker aus JSON laden
     fetch('markers.json')
       .then(response => response.json())
       .then(data => {

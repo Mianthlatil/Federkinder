@@ -1,11 +1,26 @@
 [
   {
-    "name": "Guild Base",
-    "coords": [300, 700],
+    "name": "Basis Nord",
+    "coords": [
+      300,
+      700
+    ],
     "description": "Hier ist eine Basis im Norden."
   },
   {
-    "name": "Start Region",
-    "coords": [600, 400],
+    "name": "Ressourcenlager",
+    "coords": [
+      600,
+      400
+    ],
     "description": "Lagerplatz für Ressourcen."
+  },
+  {
+    "name": "Feindstützpunkt",
+    "coords": [
+      800,
+      200
+    ],
+    "description": "Achtung! Feindliche Zone."
   }
+]
