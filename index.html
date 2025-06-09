@@ -24,6 +24,8 @@
       box-sizing: border-box;
       border-left: 1px solid #ccc;
       overflow-y: auto;
+      display: flex;
+      flex-direction: column;
     }
     #coords {
       background: rgba(0,0,0,0.7);
@@ -33,8 +35,39 @@
       border-radius: 5px;
       margin-bottom: 10px;
     }
+    #newMarkerBtn {
+      padding: 10px 15px;
+      font-size: 16px;
+      margin-bottom: 15px;
+      cursor: pointer;
+      border: none;
+      background-color: #007bff;
+      color: white;
+      border-radius: 5px;
+    }
+    #markerList {
+      flex: 1;
+      overflow-y: auto;
+      border: 1px solid #ccc;
+      background: white;
+      padding: 10px;
+      border-radius: 5px;
+    }
+    #markerList ul {
+      list-style: none;
+      padding-left: 0;
+      margin: 0;
+    }
+    #markerList li {
+      padding: 6px 8px;
+      border-bottom: 1px solid #ddd;
+      cursor: pointer;
+    }
+    #markerList li:hover {
+      background-color: #e0e0e0;
+    }
     #markerForm {
-      margin-top: 20px;
+      margin-top: 15px;
       display: none;
       background: white;
       padding: 15px;
@@ -56,7 +89,7 @@
       border-radius: 4px;
       resize: vertical;
     }
-    button {
+    button[type="submit"] {
       margin-top: 10px;
       padding: 8px 14px;
       cursor: pointer;
@@ -66,9 +99,15 @@
       border-radius: 4px;
       font-size: 14px;
     }
-    button#cancelBtn {
+    #cancelBtn {
       background-color: #888;
       margin-left: 10px;
+      padding: 8px 14px;
+      border: none;
+      color: white;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
     }
     #formMessage {
       margin-top: 10px;
@@ -84,6 +123,10 @@
   <div id="sidebar">
     <div id="coords">X: –, Y: –</div>
     <button id="newMarkerBtn">New Marker</button>
+
+    <div id="markerList">
+      <ul id="markerItems"></ul>
+    </div>
 
     <div id="markerForm">
       <h3>Neuen Marker vorschlagen</h3>
@@ -129,13 +172,28 @@
     console.log(`Klick bei: [${e.latlng.lat}, ${e.latlng.lng}]`);
   });
 
-  // Marker aus JSON laden
+  // Marker laden und Liste füllen
+  let markersOnMap = [];
+  const markerItemsUl = document.getElementById('markerItems');
+
   fetch('markers.json')
     .then(response => response.json())
     .then(data => {
       data.forEach(marker => {
-        const popup = `<strong>${marker.name}</strong><br>${marker.description}<br><em>X: ${marker.coords[0]}, Y: ${marker.coords[1]}</em>`;
-        L.marker(marker.coords).addTo(map).bindPopup(popup);
+        // Marker auf Map hinzufügen
+        const leafletMarker = L.marker(marker.coords).addTo(map)
+          .bindPopup(`<strong>${marker.name}</strong><br>${marker.description}<br><em>X: ${marker.coords[0]}, Y: ${marker.coords[1]}</em>`);
+        markersOnMap.push(leafletMarker);
+
+        // Marker in Liste anzeigen
+        const li = document.createElement('li');
+        li.textContent = marker.name;
+        li.title = marker.description;
+        li.onclick = () => {
+          map.setView(marker.coords, 2);
+          leafletMarker.openPopup();
+        };
+        markerItemsUl.appendChild(li);
       });
     })
     .catch(err => console.error('Fehler beim Laden der Marker:', err));
