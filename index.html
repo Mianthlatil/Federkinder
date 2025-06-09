@@ -1,16 +1,23 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Interaktive Dune Karte 100k x 100k</title>
+  <title>Interaktive Karte mit Marker-Vorschlägen</title>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <style>
     html, body, #map { height: 100%; margin: 0; }
-    #map { position: absolute; top: 0; left: 0; right: 250px; bottom: 0; }
 
-    /* Sidebar rechts */
+    #map {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 250px;
+      bottom: 0;
+      background: #000;
+    }
+
     #sidebar {
       position: absolute;
       top: 0;
@@ -25,29 +32,24 @@
       box-sizing: border-box;
       z-index: 1100;
     }
+
     #sidebar h2 {
       margin-top: 0;
       font-size: 1.2em;
       text-align: center;
     }
-    #markerList {
+
+    #sidebar ul {
       list-style: none;
       padding-left: 0;
-      margin-top: 10px;
     }
-    #markerList li {
+
+    #sidebar li {
       margin: 8px 0;
       font-size: 0.9em;
     }
-    #markerList label {
-      cursor: pointer;
-      user-select: none;
-    }
-    #newMarkerBtn {
-      display: block;
-      margin: 5px auto 15px auto;
-      padding: 8px 12px;
-      font-size: 1em;
+
+    #sidebar label {
       cursor: pointer;
     }
 
@@ -63,166 +65,140 @@
       z-index: 1200;
     }
 
-    /* Popup Overlay für neues Marker Formular */
-    #markerFormOverlay {
+    #newMarkerBtn {
+      display: block;
+      width: 100%;
+      margin-bottom: 15px;
+      padding: 10px;
+      font-weight: bold;
+      background: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    #overlay {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.5);
+      background: rgba(0,0,0,0.6);
       display: none;
       align-items: center;
       justify-content: center;
-      z-index: 1300;
+      z-index: 1500;
     }
-    #markerForm {
-      background: white;
+
+    #formBox {
+      background: #fff;
       padding: 20px;
       border-radius: 8px;
       width: 300px;
-      box-sizing: border-box;
-      box-shadow: 0 0 10px rgba(0,0,0,0.3);
-      font-family: sans-serif;
     }
-    #markerForm h3 {
-      margin-top: 0;
-      text-align: center;
-    }
-    #markerForm label {
-      display: block;
-      margin-top: 10px;
-      font-weight: bold;
-    }
-    #markerForm input, #markerForm textarea {
+
+    #formBox input, #formBox textarea {
       width: 100%;
-      margin-top: 5px;
+      margin-bottom: 10px;
       padding: 6px;
       box-sizing: border-box;
-      font-size: 1em;
     }
-    #markerForm textarea {
-      resize: vertical;
-    }
-    #markerForm button {
-      margin-top: 15px;
+
+    #formBox button {
       padding: 8px 12px;
-      width: 100%;
-      font-size: 1em;
-      cursor: pointer;
-    }
-    #markerForm button.cancelBtn {
-      background: #ccc;
-      margin-top: 5px;
     }
   </style>
 </head>
 <body>
   <div id="map"></div>
   <div id="sidebar">
-    <h2>Marker Übersicht</h2>
     <button id="newMarkerBtn">Neuen Marker vorschlagen</button>
+    <h2>Marker Übersicht</h2>
     <ul id="markerList"></ul>
   </div>
   <div id="coords" class="coords-box">X: –, Y: –</div>
 
-  <!-- Marker Formular Popup -->
-  <div id="markerFormOverlay">
-    <form id="markerForm">
-      <h3>Neuen Marker vorschlagen</h3>
-      <label for="markerName">Name</label>
-      <input type="text" id="markerName" required>
-
-      <label for="markerDesc">Beschreibung</label>
-      <textarea id="markerDesc" rows="3" required></textarea>
-
-      <label for="markerX">X-Koordinate (0-100000)</label>
-      <input type="number" id="markerX" min="0" max="100000" required>
-
-      <label for="markerY">Y-Koordinate (0-100000)</label>
-      <input type="number" id="markerY" min="0" max="100000" required>
-
-      <button type="submit">Vorschlagen</button>
-      <button type="button" class="cancelBtn">Abbrechen</button>
-    </form>
+  <!-- Vorschlagsformular -->
+  <div id="overlay">
+    <div id="formBox">
+      <h3>Neuer Marker</h3>
+      <form id="markerForm">
+        <input type="text" name="markerName" placeholder="Name" required />
+        <textarea name="markerDesc" placeholder="Beschreibung" required></textarea>
+        <input type="number" name="markerX" placeholder="X-Koordinate" required />
+        <input type="number" name="markerY" placeholder="Y-Koordinate" required />
+        <button type="submit">Absenden</button>
+        <button type="button" onclick="document.getElementById('overlay').style.display='none'">Abbrechen</button>
+      </form>
+    </div>
   </div>
 
   <script>
-    const MAP_SIZE = 100000;
-    const bounds = [[0, 0], [MAP_SIZE, MAP_SIZE]];
-
-    var map = L.map('map', {
+    const mapSize = 100000;
+    const map = L.map('map', {
       crs: L.CRS.Simple,
-      minZoom: -10,
+      minZoom: -7,
       maxZoom: 4
     });
 
+    const bounds = [[0, 0], [mapSize, mapSize]];
     L.imageOverlay('map.png', bounds).addTo(map);
     map.fitBounds(bounds);
 
-    // Koordinatenanzeige mit Y gespiegelt
-    map.on('mousemove', function (e) {
-      const x = e.latlng.lng.toFixed(0);
-      const y = (MAP_SIZE - e.latlng.lat).toFixed(0);
+    // Koordinatenanzeige
+    map.on('mousemove', e => {
+      const x = e.latlng.lng.toFixed(1);
+      const y = (mapSize - e.latlng.lat).toFixed(1);
       document.getElementById('coords').textContent = `X: ${x}, Y: ${y}`;
     });
 
-    const smallSvgIcon = L.divIcon({
+    // Marker-Icons
+    const icon = L.divIcon({
       className: '',
-      html: `<svg width="12" height="12" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="10" cy="10" r="8" fill="red" stroke="black" stroke-width="1"/>
-             </svg>`,
+      html: `<svg width="12" height="12"><circle cx="6" cy="6" r="5" fill="red" stroke="black"/></svg>`,
       iconSize: [12, 12],
-      iconAnchor: [6, 6],
-      popupAnchor: [0, -6]
+      iconAnchor: [6, 6]
     });
 
-    const leafletMarkers = [];
+    // Marker laden
     const markerList = document.getElementById('markerList');
+    const leafletMarkers = [];
 
     fetch('markers.json')
-      .then(res => res.json())
+      .then(r => r.json())
       .then(data => {
-        data.forEach((marker, idx) => {
-          const latlng = [MAP_SIZE - marker.coords[1], marker.coords[0]];
-          const popupContent = `<strong>${marker.name}</strong><br>${marker.description}<br><em>X: ${marker.coords[0]}, Y: ${marker.coords[1]}</em>`;
-          const m = L.marker(latlng, {icon: smallSvgIcon}).addTo(map).bindPopup(popupContent);
-          leafletMarkers.push(m);
+        data.forEach((m, i) => {
+          const lat = mapSize - m.coords[1];
+          const lng = m.coords[0];
+          const marker = L.marker([lat, lng], {icon}).addTo(map)
+            .bindPopup(`<strong>${m.name}</strong><br>${m.description}<br><em>X: ${m.coords[0]}, Y: ${m.coords[1]}</em>`);
+          leafletMarkers.push(marker);
 
           const li = document.createElement('li');
           const checkbox = document.createElement('input');
           checkbox.type = 'checkbox';
-          checkbox.id = `marker-${idx}`;
           checkbox.checked = true;
-          checkbox.addEventListener('change', function() {
-            if(this.checked) map.addLayer(m);
-            else map.removeLayer(m);
-          });
+          checkbox.id = 'marker-' + i;
+          checkbox.onchange = () => {
+            checkbox.checked ? map.addLayer(marker) : map.removeLayer(marker);
+          };
 
           const label = document.createElement('label');
           label.htmlFor = checkbox.id;
-          label.textContent = marker.name;
+          label.textContent = m.name;
 
           li.appendChild(checkbox);
           li.appendChild(label);
           markerList.appendChild(li);
         });
-      })
-      .catch(err => console.error('Fehler beim Laden der Marker:', err));
+      });
 
-    // Formular-Overlay Handling
-    const overlay = document.getElementById('markerFormOverlay');
+    // Formular anzeigen
+    document.getElementById('newMarkerBtn').onclick = () => {
+      document.getElementById('overlay').style.display = 'flex';
+    };
+
+    // Formular absenden
     const form = document.getElementById('markerForm');
-    const newMarkerBtn = document.getElementById('newMarkerBtn');
-    const cancelBtn = form.querySelector('.cancelBtn');
-
-    newMarkerBtn.addEventListener('click', () => {
-      overlay.style.display = 'flex';
-    });
-
-    cancelBtn.addEventListener('click', () => {
-      overlay.style.display = 'none';
-      form.reset();
-    });
-
-    form.addEventListener('submit', (e) => {
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
 
       const name = form.markerName.value.trim();
@@ -230,16 +206,26 @@
       const x = Number(form.markerX.value);
       const y = Number(form.markerY.value);
 
-      if(!name || !desc || isNaN(x) || isNaN(y) || x < 0 || x > MAP_SIZE || y < 0 || y > MAP_SIZE) {
-        alert('Bitte gültige Werte eingeben.');
+      if (!name || !desc || isNaN(x) || isNaN(y)) {
+        alert("Bitte gültige Daten eingeben.");
         return;
       }
 
-      // Hier kannst du den Discord Webhook Aufruf ergänzen oder sonstige Verarbeitung machen
-      alert(`Marker-Vorschlag gesendet:\nName: ${name}\nBeschreibung: ${desc}\nKoordinaten: X=${x}, Y=${y}`);
+      try {
+        const res = await fetch('/api/submitMarker', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, description: desc, x, y })
+        });
 
-      form.reset();
-      overlay.style.display = 'none';
+        if (!res.ok) throw new Error("Serverfehler");
+        alert("Vorschlag gesendet!");
+        form.reset();
+        document.getElementById('overlay').style.display = 'none';
+      } catch (err) {
+        alert("Fehler beim Senden des Vorschlags.");
+        console.error(err);
+      }
     });
   </script>
 </body>
