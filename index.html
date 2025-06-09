@@ -1,21 +1,147 @@
-<button id="newMarkerBtn">New Marker</button>
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Interaktive Dune Karte</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      display: flex;
+      font-family: sans-serif;
+    }
+    #map {
+      flex: 1;
+      height: 100vh;
+    }
+    #sidebar {
+      width: 320px;
+      background: #f5f5f5;
+      padding: 20px;
+      box-sizing: border-box;
+      border-left: 1px solid #ccc;
+      overflow-y: auto;
+    }
+    #coords {
+      background: rgba(0,0,0,0.7);
+      color: white;
+      padding: 5px 10px;
+      font-family: monospace;
+      border-radius: 5px;
+      margin-bottom: 10px;
+    }
+    #markerForm {
+      margin-top: 20px;
+      display: none;
+      background: white;
+      padding: 15px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+    }
+    input[type="text"],
+    input[type="number"],
+    textarea {
+      width: 100%;
+      padding: 6px;
+      margin-top: 4px;
+      box-sizing: border-box;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      resize: vertical;
+    }
+    button {
+      margin-top: 10px;
+      padding: 8px 14px;
+      cursor: pointer;
+      border: none;
+      background-color: #007bff;
+      color: white;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    button#cancelBtn {
+      background-color: #888;
+      margin-left: 10px;
+    }
+    #formMessage {
+      margin-top: 10px;
+      font-weight: bold;
+      color: green;
+    }
+  </style>
+</head>
+<body>
 
-<div id="markerForm" style="display:none; position: fixed; top: 20%; left: 50%; transform: translateX(-50%);
- background: white; border: 1px solid #ccc; padding: 20px; z-index: 1001;">
-  <h3>Neuen Marker vorschlagen</h3>
-  <form id="newMarkerForm">
-    <label>Name:<br><input type="text" name="name" required></label><br>
-    <label>Beschreibung:<br><textarea name="description" required></textarea></label><br>
-    <label>X Koordinate:<br><input type="number" name="x" step="0.1" required></label><br>
-    <label>Y Koordinate:<br><input type="number" name="y" step="0.1" required></label><br>
-    <button type="submit">Senden</button>
-    <button type="button" id="cancelBtn">Abbrechen</button>
-  </form>
-  <div id="formMessage"></div>
-</div>
+  <div id="map"></div>
+
+  <div id="sidebar">
+    <div id="coords">X: –, Y: –</div>
+    <button id="newMarkerBtn">New Marker</button>
+
+    <div id="markerForm">
+      <h3>Neuen Marker vorschlagen</h3>
+      <form id="newMarkerForm">
+        <label>Name:
+          <input type="text" name="name" required>
+        </label>
+        <label>Beschreibung:
+          <textarea name="description" required></textarea>
+        </label>
+        <label>X Koordinate:
+          <input type="number" name="x" step="0.1" required>
+        </label>
+        <label>Y Koordinate:
+          <input type="number" name="y" step="0.1" required>
+        </label>
+        <button type="submit">Senden</button>
+        <button type="button" id="cancelBtn">Abbrechen</button>
+      </form>
+      <div id="formMessage"></div>
+    </div>
+  </div>
 
 <script>
-  const webhookUrl = 'DEINE_DISCORD_WEBHOOK_URL_HIER'; // Hier deine Discord Webhook URL einfügen
+  var map = L.map('map', {
+    crs: L.CRS.Simple,
+    minZoom: -1,
+    maxZoom: 4
+  });
+
+  const bounds = [[0, 0], [1024, 1024]];
+  L.imageOverlay('map.png', bounds).addTo(map);
+  map.fitBounds(bounds);
+
+  // Koordinaten anzeigen
+  map.on('mousemove', function (e) {
+    document.getElementById('coords').textContent =
+      `X: ${e.latlng.lat.toFixed(1)}, Y: ${e.latlng.lng.toFixed(1)}`;
+  });
+
+  // Klick → Koordinaten in Konsole loggen
+  map.on('click', function (e) {
+    console.log(`Klick bei: [${e.latlng.lat}, ${e.latlng.lng}]`);
+  });
+
+  // Marker aus JSON laden
+  fetch('markers.json')
+    .then(response => response.json())
+    .then(data => {
+      data.forEach(marker => {
+        const popup = `<strong>${marker.name}</strong><br>${marker.description}<br><em>X: ${marker.coords[0]}, Y: ${marker.coords[1]}</em>`;
+        L.marker(marker.coords).addTo(map).bindPopup(popup);
+      });
+    })
+    .catch(err => console.error('Fehler beim Laden der Marker:', err));
+
+  // --- New Marker Formular Logik ---
+  const webhookUrl = 'DEINE_DISCORD_WEBHOOK_URL_HIER'; // Discord Webhook URL hier einfügen
 
   const newMarkerBtn = document.getElementById('newMarkerBtn');
   const markerForm = document.getElementById('markerForm');
@@ -50,13 +176,19 @@
         body: JSON.stringify({ content })
       });
       if (res.ok) {
+        formMessage.style.color = 'green';
         formMessage.textContent = 'Vorschlag gesendet!';
         form.reset();
       } else {
+        formMessage.style.color = 'red';
         formMessage.textContent = 'Fehler beim Senden!';
       }
     } catch (err) {
+      formMessage.style.color = 'red';
       formMessage.textContent = 'Fehler beim Senden!';
     }
   };
 </script>
+
+</body>
+</html>
