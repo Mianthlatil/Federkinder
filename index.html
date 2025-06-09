@@ -12,10 +12,12 @@
       margin: 0;
       display: flex;
       font-family: sans-serif;
+      overflow: hidden;
     }
     #map {
       flex: 1;
       height: 100vh;
+      min-width: 0; /* wichtig für flexbox bei Chrome */
     }
     #sidebar {
       width: 320px;
@@ -26,6 +28,8 @@
       overflow-y: auto;
       display: flex;
       flex-direction: column;
+      /* Sidebar rechts */
+      order: 2;
     }
     #coords {
       background: rgba(0,0,0,0.7);
@@ -34,6 +38,7 @@
       font-family: monospace;
       border-radius: 5px;
       margin-bottom: 10px;
+      user-select: none;
     }
     #newMarkerBtn {
       padding: 10px 15px;
@@ -59,12 +64,18 @@
       margin: 0;
     }
     #markerList li {
+      display: flex;
+      align-items: center;
       padding: 6px 8px;
       border-bottom: 1px solid #ddd;
-      cursor: pointer;
+      cursor: default;
     }
     #markerList li:hover {
       background-color: #e0e0e0;
+    }
+    #markerList label {
+      flex-grow: 1;
+      cursor: pointer;
     }
     #markerForm {
       margin-top: 15px;
@@ -179,20 +190,43 @@
   fetch('markers.json')
     .then(response => response.json())
     .then(data => {
-      data.forEach(marker => {
+      data.forEach((marker, index) => {
         // Marker auf Map hinzufügen
         const leafletMarker = L.marker(marker.coords).addTo(map)
           .bindPopup(`<strong>${marker.name}</strong><br>${marker.description}<br><em>X: ${marker.coords[0]}, Y: ${marker.coords[1]}</em>`);
         markersOnMap.push(leafletMarker);
 
-        // Marker in Liste anzeigen
+        // Marker in Liste anzeigen mit Checkbox
         const li = document.createElement('li');
-        li.textContent = marker.name;
-        li.title = marker.description;
-        li.onclick = () => {
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = true;
+        checkbox.id = 'markerCheck' + index;
+
+        // Checkbox: Marker an/aus schalten
+        checkbox.addEventListener('change', () => {
+          if (checkbox.checked) {
+            markersOnMap[index].addTo(map);
+          } else {
+            map.removeLayer(markersOnMap[index]);
+          }
+        });
+
+        // Label für Klick auf Namen, öffnet Popup und zentriert Map
+        const label = document.createElement('label');
+        label.htmlFor = checkbox.id;
+        label.textContent = marker.name;
+        label.title = marker.description;
+        label.style.userSelect = 'none';
+        label.style.flexGrow = '1';
+        label.style.cursor = 'pointer';
+        label.addEventListener('click', () => {
           map.setView(marker.coords, 2);
-          leafletMarker.openPopup();
-        };
+          markersOnMap[index].openPopup();
+        });
+
+        li.appendChild(checkbox);
+        li.appendChild(label);
         markerItemsUl.appendChild(li);
       });
     })
@@ -221,8 +255,8 @@
     const data = {
       name: form.name.value,
       description: form.description.value,
-      x: form.x.value,
-      y: form.y.value
+      x: parseFloat(form.x.value),
+      y: parseFloat(form.y.value)
     };
 
     const content = `Neuer Marker Vorschlag:\n**${data.name}**\n${data.description}\nKoordinaten: X=${data.x}, Y=${data.y}`;
