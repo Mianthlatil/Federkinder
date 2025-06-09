@@ -1,7 +1,7 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html>
 <head>
-  <title>Dune Map</title>
+  <title>Interaktive Karte mit Koordinaten</title>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
@@ -36,21 +36,39 @@
     L.imageOverlay('map.png', bounds).addTo(map);
     map.fitBounds(bounds);
 
+    // Koordinatenanzeige (X = lng, Y = lat)
     map.on('mousemove', function (e) {
       document.getElementById('coords').textContent = 
-        `X: ${e.latlng.lat.toFixed(1)}, Y: ${e.latlng.lng.toFixed(1)}`;
+        `X: ${e.latlng.lng.toFixed(1)}, Y: ${e.latlng.lat.toFixed(1)}`;
     });
 
+    // Klick → Koordinaten in Konsole loggen
     map.on('click', function (e) {
       console.log(`Klick bei: [${e.latlng.lat}, ${e.latlng.lng}]`);
     });
 
+    // Kleines SVG-Icon für Marker definieren
+    const smallSvgIcon = L.divIcon({
+      className: '',
+      html: `
+        <svg width="20" height="20" viewBox="0 0 20 20" 
+             xmlns="http://www.w3.org/2000/svg">
+          <circle cx="10" cy="10" r="8" fill="red" stroke="black" stroke-width="1"/>
+        </svg>`,
+      iconSize: [20, 20],
+      iconAnchor: [10, 10],
+      popupAnchor: [0, -10]
+    });
+
+    // Marker aus JSON laden und mit kleinem Icon setzen
     fetch('markers.json')
       .then(response => response.json())
       .then(data => {
         data.forEach(marker => {
+          // coords: [X, Y] → Leaflet: [lat, lng] = [Y, X]
+          const latlng = [marker.coords[1], marker.coords[0]];
           const popup = `<strong>${marker.name}</strong><br>${marker.description}<br><em>X: ${marker.coords[0]}, Y: ${marker.coords[1]}</em>`;
-          L.marker(marker.coords).addTo(map).bindPopup(popup);
+          L.marker(latlng, {icon: smallSvgIcon}).addTo(map).bindPopup(popup);
         });
       })
       .catch(err => console.error('Fehler beim Laden der Marker:', err));
