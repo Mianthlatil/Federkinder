@@ -8,7 +8,7 @@
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <style>
     html, body, #map { height: 100%; margin: 0; }
-    #map { position: absolute; top: 0; left: 0; right: 250px; bottom: 0; }
+    #map { position: absolute; top: 0; left: 0; right: 250px; }
 
     /* Sidebar rechts */
     #sidebar {
@@ -79,7 +79,7 @@
 
     var map = L.map('map', {
       crs: L.CRS.Simple,
-      minZoom: -5,
+      minZoom: -10,  // hier weiter rauszoomen
       maxZoom: 4
     });
 
@@ -155,7 +155,6 @@
         return;
       }
 
-      // Hier kannst du deine fetch-POST an den Discord-Webhook oder API einfügen
       alert(`Marker-Vorschlag gesendet:\nName: ${name}\nBeschreibung: ${desc}\nKoordinaten: X=${x}, Y=${y}`);
     });
   </script>
