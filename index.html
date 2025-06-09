@@ -164,7 +164,7 @@
           coords: [parseFloat(form.x.value), parseFloat(form.y.value)]
         };
         try {
-          await fetch('/api/submitMarker', {
+          await fetch('https://federkinder.vercel.app/api/submitMarker', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
