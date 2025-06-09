@@ -11,13 +11,14 @@
       height: 100%;
       margin: 0;
       display: flex;
-      font-family: sans-serif;
       overflow: hidden;
+      font-family: sans-serif;
     }
     #map {
       flex: 1;
+      min-width: 0;
       height: 100vh;
-      min-width: 0; /* wichtig für flexbox bei Chrome */
+      order: 1; /* Karte links */
     }
     #sidebar {
       width: 320px;
@@ -28,8 +29,7 @@
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      /* Sidebar rechts */
-      order: 2;
+      order: 2; /* Menü rechts */
     }
     #coords {
       background: rgba(0,0,0,0.7);
@@ -76,6 +76,7 @@
     #markerList label {
       flex-grow: 1;
       cursor: pointer;
+      user-select: none;
     }
     #markerForm {
       margin-top: 15px;
@@ -217,9 +218,6 @@
         label.htmlFor = checkbox.id;
         label.textContent = marker.name;
         label.title = marker.description;
-        label.style.userSelect = 'none';
-        label.style.flexGrow = '1';
-        label.style.cursor = 'pointer';
         label.addEventListener('click', () => {
           map.setView(marker.coords, 2);
           markersOnMap[index].openPopup();
