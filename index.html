@@ -8,7 +8,7 @@
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <style>
     html, body, #map { height: 100%; margin: 0; }
-    #map { position: absolute; bottom: 0; left: 0; right: 250px; }
+    #map { position: absolute; top: 0; left: 0; right: 250px; bottom: 0; }
 
     /* Sidebar rechts */
     #sidebar {
@@ -75,21 +75,23 @@
 
   <script>
     // Karte initialisieren
-    const bounds = [[0, 0], [100000, 100000]];
+    const MAP_SIZE = 100000;
+    const bounds = [[0, 0], [MAP_SIZE, MAP_SIZE]];
 
     var map = L.map('map', {
       crs: L.CRS.Simple,
-      minZoom: -10,  // hier weiter rauszoomen
+      minZoom: -10,
       maxZoom: 4
     });
 
     L.imageOverlay('map.png', bounds).addTo(map);
     map.fitBounds(bounds);
 
-    // Koordinatenanzeige (X=lng, Y=lat)
+    // Koordinatenanzeige, Y gespiegelt (0 oben)
     map.on('mousemove', function (e) {
-      document.getElementById('coords').textContent =
-        `X: ${e.latlng.lng.toFixed(0)}, Y: ${e.latlng.lat.toFixed(0)}`;
+      const x = e.latlng.lng.toFixed(0);
+      const y = (MAP_SIZE - e.latlng.lat).toFixed(0);
+      document.getElementById('coords').textContent = `X: ${x}, Y: ${y}`;
     });
 
     // Marker Icon (klein und simpel)
@@ -110,8 +112,8 @@
       .then(res => res.json())
       .then(data => {
         data.forEach((marker, idx) => {
-          // Leaflet: lat = Y, lng = X
-          const latlng = [marker.coords[1], marker.coords[0]];
+          // Koordinaten Y-Achse spiegeln
+          const latlng = [MAP_SIZE - marker.coords[1], marker.coords[0]];
           const popupContent = `<strong>${marker.name}</strong><br>${marker.description}<br><em>X: ${marker.coords[0]}, Y: ${marker.coords[1]}</em>`;
           const m = L.marker(latlng, {icon: smallSvgIcon}).addTo(map).bindPopup(popupContent);
           leafletMarkers.push(m);
@@ -150,7 +152,7 @@
         return;
       }
 
-      if(isNaN(x) || isNaN(y) || x < 0 || x > 100000 || y < 0 || y > 100000) {
+      if(isNaN(x) || isNaN(y) || x < 0 || x > MAP_SIZE || y < 0 || y > MAP_SIZE) {
         alert('Koordinaten müssen Zahlen zwischen 0 und 100000 sein.');
         return;
       }
