@@ -2,16 +2,16 @@
   {
     "name": "Start Gebiet",
     "coords": [
-      7000,
-      1000
+      70000,
+      10000
     ],
     "description": "Start Gebiet"
   },
     {
     "name": "Charly's Base",
     "coords": [
-      7950,
-      5310
+      79500,
+      53100
     ],
     "description": "Start Gebiet"
   }
