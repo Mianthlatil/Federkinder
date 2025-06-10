@@ -5,7 +5,7 @@
       47964,
       19836
     ],
-    "description": "Start Gebiet"
+    "description": "Frei für Gilde"
   },
     {
     "name": "Charly's Base",
@@ -30,6 +30,14 @@
       43104
     ],
     "description": "Erste größere Base"
+  },
+    {
+    "name": "Yamo/Gilde 2 (groß)",
+    "coords": [
+      83136,
+      3946
+    ],
+    "description": "Gilde groß"
   },
     {
     "name": "Verso base",
