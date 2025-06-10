@@ -54,5 +54,13 @@
       90894
     ],
     "description": "Starter-Base"
+  },
+    {
+    "name": "Elathar Base",
+    "coords": [
+      41664,
+      48416
+    ],
+    "description": "Mainbase"
   }
 ]
