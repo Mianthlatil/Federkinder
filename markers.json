@@ -1,9 +1,9 @@
 [
   {
-    "name": "Start Gebiet",
+    "name": "Guild Base",
     "coords": [
-      70000,
-      85000
+      47964,
+      19836
     ],
     "description": "Start Gebiet"
   },
@@ -38,14 +38,6 @@
       61792
     ],
     "description": "Zentral"
-  },
-    {
-    "name": "Guild Base",
-    "coords": [
-      24851,
-      19836
-    ],
-    "description": "Guild Base"
   },
     {
     "name": "M's Base",
