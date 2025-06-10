@@ -30,5 +30,13 @@
       43104
     ],
     "description": "Erste größere Base"
+  },
+    {
+    "name": "Verso base",
+    "coords": [
+      69952,
+      61792
+    ],
+    "description": "Zentral"
   }
 ]
