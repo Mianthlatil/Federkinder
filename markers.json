@@ -62,5 +62,45 @@
       48416
     ],
     "description": "Mainbase"
+  },
+    {
+    "name": "Knorpelchen",
+    "coords": [
+      55936,
+      70016
+    ],
+    "description": "Südwestliche Eisenwerke"
+  },
+    {
+    "name": "TheAntares Base",
+    "coords": [
+      68222,
+      54876
+    ],
+    "description": "TheAntares Base"
+  },
+    {
+    "name": "Renko",
+    "coords": [
+      45700,
+      40500
+    ],
+    "description": "Abreißbar falls es zu eng wird"
+  },
+    {
+    "name": "Siv Base",
+    "coords": [
+      67700,
+      56200
+    ],
+    "description": "erstmal nur Wasser offen bis zur Fertigstellung"
+  },
+    {
+    "name": "3er Gilden-Base",
+    "coords": [
+      60208,
+      70237
+    ],
+    "description": "Eine Basis von Shadow, Lyuien, Khartif"
   }
 ]
