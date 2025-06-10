@@ -14,5 +14,21 @@
       53100
     ],
     "description": "offen für die Gilde"
+  },
+    {
+    "name": "FreeDive",
+    "coords": [
+      44448,
+      41318
+    ],
+    "description": "Hauptbasis"
+  },
+    {
+    "name": "Yamo 1",
+    "coords": [
+      43328,
+      43104
+    ],
+    "description": "Erste größere Base"
   }
 ]
