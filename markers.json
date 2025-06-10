@@ -38,5 +38,21 @@
       61792
     ],
     "description": "Zentral"
+  },
+    {
+    "name": "Guild Base",
+    "coords": [
+      24851,
+      19836
+    ],
+    "description": "Guild Base"
+  },
+    {
+    "name": "M's Base",
+    "coords": [
+      77520,
+      90894
+    ],
+    "description": "Starter-Base"
   }
 ]
