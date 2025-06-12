@@ -2,32 +2,20 @@
 <html lang="de">
 <head>
   <meta charset="utf-8" />
-  <title>Interaktive Karte mit Gilden Basen und Markern</title>
+  <title>Interaktive Karte</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet/dist/leaflet.css"
-  />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <style>
-    html,
-    body,
-    #map {
-      height: 100%;
-      margin: 0;
-    }
+    html, body, #map { height: 100%; margin: 0; }
     #map {
       position: absolute;
-      top: 0;
-      left: 0;
-      right: 250px;
-      bottom: 0;
+      top: 0; left: 0; right: 250px; bottom: 0;
       background: #000;
     }
     #sidebar {
       position: absolute;
-      top: 0;
-      right: 0;
+      top: 0; right: 0;
       width: 250px;
       height: 100%;
       background: #f9f9f9;
@@ -35,7 +23,6 @@
       overflow-y: auto;
       padding: 10px;
       font-family: sans-serif;
-      box-sizing: border-box;
       z-index: 1100;
     }
     #sidebar h2 {
@@ -54,9 +41,6 @@
       margin: 6px 0;
       font-size: 0.9em;
     }
-    #sidebar label {
-      cursor: pointer;
-    }
     .coords-box {
       position: absolute;
       bottom: 10px;
@@ -68,6 +52,40 @@
       border-radius: 5px;
       z-index: 1200;
     }
+    #suggestButton {
+      margin-top: 10px;
+      width: 100%;
+      padding: 8px;
+      background: #4caf50;
+      color: #fff;
+      border: none;
+      font-weight: bold;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    #suggestForm {
+      display: none;
+      margin-top: 10px;
+    }
+    #suggestForm input, #suggestForm textarea, #suggestForm select {
+      width: 100%;
+      margin-bottom: 5px;
+      padding: 6px;
+      box-sizing: border-box;
+    }
+    #suggestForm button {
+      background: #2196f3;
+      color: #fff;
+      border: none;
+      padding: 6px;
+      width: 100%;
+      border-radius: 4px;
+    }
+    #hint {
+      font-size: 0.85em;
+      color: #555;
+      margin-bottom: 5px;
+    }
   </style>
 </head>
 <body>
@@ -75,32 +93,49 @@
   <div id="sidebar">
     <h2>Marker Übersicht</h2>
     <div id="markerGroups"></div>
+
+    <button id="suggestButton">📍 Marker vorschlagen</button>
+    <div id="hint">Klicke auf die Karte, um X/Y-Koordinaten zu setzen.</div>
+
+    <form id="suggestForm">
+      <input type="text" id="markerName" placeholder="Name" required />
+      <textarea id="markerDescription" placeholder="Beschreibung" required></textarea>
+      <input type="text" id="markerX" placeholder="X-Koordinate" readonly />
+      <input type="text" id="markerY" placeholder="Y-Koordinate" readonly />
+      <select id="markerColor">
+        <option value="red">Rot</option>
+        <option value="green">Grün</option>
+        <option value="blue">Blau</option>
+        <option value="yellow">Gelb</option>
+      </select>
+      <button type="submit">Absenden</button>
+    </form>
   </div>
   <div id="coords" class="coords-box">X: –, Y: –</div>
 
   <script>
     const mapSize = 100000;
-    const map = L.map('map', {
-      crs: L.CRS.Simple,
-      minZoom: -7,
-      maxZoom: 4,
-    });
-
-    const bounds = [
-      [0, 0],
-      [mapSize, mapSize],
-    ];
+    const map = L.map('map', { crs: L.CRS.Simple, minZoom: -7, maxZoom: 4 });
+    const bounds = [[0, 0], [mapSize, mapSize]];
     L.imageOverlay('map.png', bounds).addTo(map);
     map.fitBounds(bounds);
 
-    // Koordinatenanzeige
     map.on('mousemove', (e) => {
       const x = e.latlng.lng.toFixed(1);
       const y = (mapSize - e.latlng.lat).toFixed(1);
       document.getElementById('coords').textContent = `X: ${x}, Y: ${y}`;
     });
 
-    // Kleinere, kräftige Icons
+    const markerGroupsContainer = document.getElementById('markerGroups');
+
+    function colorNameToHex(colorName) {
+      const map = {
+        red: '#d62728', green: '#1a9d37',
+        blue: '#1f77b4', yellow: '#ffbb00'
+      };
+      return map[colorName.toLowerCase()] || colorName;
+    }
+
     function createIcon(color) {
       return L.divIcon({
         className: '',
@@ -112,108 +147,101 @@
       });
     }
 
-    const markerGroupsContainer = document.getElementById('markerGroups');
-    const leafletMarkers = [];
-
-    function colorNameToHex(colorName) {
-      const map = {
-        red: '#d62728',
-        green: '#1a9d37', // kräftiges Grün
-        blue: '#1f77b4',
-        yellow: '#ffbb00',
-        orange: '#ff7f0e',
-        purple: '#9467bd',
-        pink: '#e377c2',
-        brown: '#8c564b',
-        gray: '#7f7f7f',
-      };
-      return map[colorName.toLowerCase()] || colorName;
-    }
-
     fetch('markers.json')
-      .then((r) => r.json())
-      .then((data) => {
-        // Aufteilen in zwei Gruppen: grün = "Gilden Basen", andere = "Marker"
-        const gildenBasen = data.filter((m) => (m.color || '').toLowerCase() === 'green');
-        const andereMarker = data.filter((m) => (m.color || '').toLowerCase() !== 'green');
+      .then(res => res.json())
+      .then(data => {
+        const gildenBasen = data.filter(m => m.color === 'green');
+        const andere = data.filter(m => m.color !== 'green');
 
-        // Gruppe Gilden Basen
-        const gildenHeader = document.createElement('h2');
-        gildenHeader.innerHTML = `<span style="display:inline-block;width:12px;height:12px;background:${colorNameToHex('green')};border-radius:50%;margin-right:8px;vertical-align:middle;"></span>Gilden Basen`;
-        markerGroupsContainer.appendChild(gildenHeader);
-        const gildenUl = document.createElement('ul');
-        markerGroupsContainer.appendChild(gildenUl);
+        function renderGroup(title, items, fallbackColor) {
+          const h2 = document.createElement('h2');
+          h2.innerHTML = `<span style="display:inline-block;width:12px;height:12px;background:${fallbackColor};border-radius:50%;margin-right:8px;vertical-align:middle;"></span>${title}`;
+          markerGroupsContainer.appendChild(h2);
 
-        gildenBasen.forEach((markerData) => {
-          const lat = mapSize - markerData.coords[1];
-          const lng = markerData.coords[0];
-          const colorHex = colorNameToHex(markerData.color || 'green');
-          const icon = createIcon(colorHex);
-          const marker = L.marker([lat, lng], { icon }).addTo(map)
-            .bindPopup(
-              `<strong>${markerData.name}</strong><br>${markerData.description}<br><em>X: ${markerData.coords[0]}, Y: ${markerData.coords[1]}</em>`
-            );
-          leafletMarkers.push(marker);
+          const ul = document.createElement('ul');
+          markerGroupsContainer.appendChild(ul);
 
-          const li = document.createElement('li');
-          const checkbox = document.createElement('input');
-          checkbox.type = 'checkbox';
-          checkbox.checked = true;
-          const id = 'marker-' + Math.random().toString(36).substr(2, 9);
-          checkbox.id = id;
-          checkbox.onchange = () => {
-            checkbox.checked ? map.addLayer(marker) : map.removeLayer(marker);
-          };
+          items.forEach(markerData => {
+            const lat = mapSize - markerData.coords[1];
+            const lng = markerData.coords[0];
+            const colorHex = colorNameToHex(markerData.color || fallbackColor);
+            const icon = createIcon(colorHex);
+            const marker = L.marker([lat, lng], { icon }).addTo(map)
+              .bindPopup(`<strong>${markerData.name}</strong><br>${markerData.description}<br><em>X: ${markerData.coords[0]}, Y: ${markerData.coords[1]}</em>`);
 
-          const label = document.createElement('label');
-          label.htmlFor = id;
-          label.textContent = markerData.name;
+            const li = document.createElement('li');
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.checked = true;
+            const id = 'marker-' + Math.random().toString(36).substring(2, 9);
+            checkbox.id = id;
+            checkbox.onchange = () => {
+              checkbox.checked ? map.addLayer(marker) : map.removeLayer(marker);
+            };
 
-          li.appendChild(checkbox);
-          li.appendChild(label);
-          gildenUl.appendChild(li);
-        });
+            const label = document.createElement('label');
+            label.htmlFor = id;
+            label.textContent = markerData.name;
 
-        // Gruppe Marker (alle anderen Farben)
-        const markerHeader = document.createElement('h2');
-        markerHeader.innerHTML = `<span style="display:inline-block;width:12px;height:12px;background:#666;border-radius:50%;margin-right:8px;vertical-align:middle;"></span>Marker`;
-        markerGroupsContainer.appendChild(markerHeader);
-        const markerUl = document.createElement('ul');
-        markerGroupsContainer.appendChild(markerUl);
+            li.appendChild(checkbox);
+            li.appendChild(label);
+            ul.appendChild(li);
+          });
+        }
 
-        andereMarker.forEach((markerData) => {
-          const lat = mapSize - markerData.coords[1];
-          const lng = markerData.coords[0];
-          const colorHex = colorNameToHex(markerData.color || '#666');
-          const icon = createIcon(colorHex);
-          const marker = L.marker([lat, lng], { icon }).addTo(map)
-            .bindPopup(
-              `<strong>${markerData.name}</strong><br>${markerData.description}<br><em>X: ${markerData.coords[0]}, Y: ${markerData.coords[1]}</em>`
-            );
-          leafletMarkers.push(marker);
-
-          const li = document.createElement('li');
-          const checkbox = document.createElement('input');
-          checkbox.type = 'checkbox';
-          checkbox.checked = true;
-          const id = 'marker-' + Math.random().toString(36).substr(2, 9);
-          checkbox.id = id;
-          checkbox.onchange = () => {
-            checkbox.checked ? map.addLayer(marker) : map.removeLayer(marker);
-          };
-
-          const label = document.createElement('label');
-          label.htmlFor = id;
-          label.textContent = markerData.name;
-
-          li.appendChild(checkbox);
-          li.appendChild(label);
-          markerUl.appendChild(li);
-        });
-      })
-      .catch((err) => {
-        console.error('Fehler beim Laden der Marker:', err);
+        renderGroup('Gilden Basen', gildenBasen, '#1a9d37');
+        renderGroup('Marker', andere, '#666');
       });
+
+    // Vorschlagsformular
+    const suggestButton = document.getElementById('suggestButton');
+    const suggestForm = document.getElementById('suggestForm');
+    const markerX = document.getElementById('markerX');
+    const markerY = document.getElementById('markerY');
+
+    let lastClickCoords = null;
+    map.on('click', (e) => {
+      lastClickCoords = {
+        x: Math.round(e.latlng.lng),
+        y: Math.round(mapSize - e.latlng.lat),
+      };
+      markerX.value = lastClickCoords.x;
+      markerY.value = lastClickCoords.y;
+    });
+
+    suggestButton.onclick = () => {
+      suggestForm.style.display = suggestForm.style.display === 'none' ? 'block' : 'none';
+    };
+
+    suggestForm.onsubmit = async (e) => {
+      e.preventDefault();
+      const payload = {
+        name: document.getElementById('markerName').value,
+        description: document.getElementById('markerDescription').value,
+        x: markerX.value,
+        y: markerY.value,
+        color: document.getElementById('markerColor').value,
+      };
+
+      const formatted = `\`\`\`json
+{
+  "name": "${payload.name}",
+  "coords": [${payload.x}, ${payload.y}],
+  "description": "${payload.description}",
+  "color": "${payload.color}"
+}
+\`\`\``;
+
+      await fetch('/api/suggest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: `📍 **Neuer Marker-Vorschlag**\n${formatted}` }),
+      });
+
+      alert('Marker wurde vorgeschlagen!');
+      suggestForm.reset();
+      suggestForm.style.display = 'none';
+    };
   </script>
 </body>
 </html>
