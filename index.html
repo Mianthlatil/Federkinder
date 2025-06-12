@@ -38,6 +38,41 @@
       border-radius: 5px;
       z-index: 1200;
     }
+    .suggestion-section {
+      margin-top: 20px;
+      border-top: 1px solid #ccc;
+      padding-top: 10px;
+    }
+    .approve-btn {
+      margin-top: 5px;
+      background-color: green;
+      color: white;
+      border: none;
+      padding: 5px 8px;
+      cursor: pointer;
+    }
+    .suggest-btn {
+      width: 100%;
+      padding: 8px;
+      margin-top: 10px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    .form-popup {
+      position: absolute;
+      z-index: 1500;
+      background: white;
+      border: 1px solid #ccc;
+      padding: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+      font-size: 14px;
+    }
+    .form-popup input, .form-popup textarea {
+      width: 100%;
+      margin-bottom: 5px;
+    }
   </style>
 </head>
 <body>
@@ -45,6 +80,13 @@
   <div id="sidebar">
     <h2>Marker Übersicht</h2>
     <ul id="markerList"></ul>
+
+    <button id="suggestBtn" class="suggest-btn">Marker vorschlagen</button>
+
+    <div class="suggestion-section">
+      <h3>Vorschläge</h3>
+      <ul id="suggestionList"></ul>
+    </div>
   </div>
   <div id="coords" class="coords-box">X: –, Y: –</div>
 
@@ -76,7 +118,7 @@
     }
 
     function getColorByType(type) {
-      switch (type.toLowerCase()) {
+      switch ((type || '').toLowerCase()) {
         case 'gilde': return 'green';
         case 'player': return 'blue';
         case 'rot': return 'red';
@@ -88,6 +130,7 @@
     }
 
     const markerList = document.getElementById('markerList');
+    const suggestionList = document.getElementById('suggestionList');
 
     fetch('markers.json')
       .then(r => r.json())
@@ -119,6 +162,71 @@
           markerList.appendChild(li);
         });
       });
+
+    fetch('suggestions.json')
+      .then(r => r.json())
+      .then(suggestions => {
+        suggestions.forEach((s, i) => {
+          const li = document.createElement('li');
+          li.innerHTML = `<strong>${s.name}</strong><br>${s.description}<br><em>X: ${s.x}, Y: ${s.y}</em><br>`;
+
+          const btn = document.createElement('button');
+          btn.textContent = 'Annehmen';
+          btn.className = 'approve-btn';
+          btn.onclick = () => {
+            alert(`Vorschlag "${s.name}" angenommen!`);
+            li.remove();
+          };
+
+          li.appendChild(btn);
+          suggestionList.appendChild(li);
+        });
+      });
+
+    // Marker-Vorschlagen-Funktionalität
+    let suggestMode = false;
+    document.getElementById('suggestBtn').addEventListener('click', () => {
+      suggestMode = true;
+      alert('Klicke auf die Karte, um einen Marker vorzuschlagen.');
+    });
+
+    map.on('click', e => {
+      if (!suggestMode) return;
+      suggestMode = false;
+
+      const x = e.latlng.lng.toFixed(1);
+      const y = (mapSize - e.latlng.lat).toFixed(1);
+
+      const form = document.createElement('div');
+      form.className = 'form-popup';
+      form.style.left = e.originalEvent.pageX + 'px';
+      form.style.top = e.originalEvent.pageY + 'px';
+
+      form.innerHTML = `
+        <strong>Neuer Marker</strong><br>
+        <input type="text" id="markerName" placeholder="Name"><br>
+        <textarea id="markerDesc" placeholder="Beschreibung"></textarea><br>
+        <button id="submitMarker">Senden</button>
+        <button id="cancelMarker">Abbrechen</button>
+      `;
+
+      document.body.appendChild(form);
+
+      document.getElementById('submitMarker').onclick = () => {
+        const name = document.getElementById('markerName').value;
+        const desc = document.getElementById('markerDesc').value;
+
+        if (!name.trim()) return alert('Bitte Name eingeben.');
+
+        // Hier kann man ein fetch() POST einbauen
+        alert(`Vorgeschlagen: ${name} @ X: ${x}, Y: ${y}`);
+        form.remove();
+      };
+
+      document.getElementById('cancelMarker').onclick = () => {
+        form.remove();
+      };
+    });
   </script>
 </body>
 </html>
