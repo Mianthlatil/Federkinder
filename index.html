@@ -1,43 +1,270 @@
-// Funktion, um ein farbiges Marker-Icon zu erstellen
-function createColoredIcon(color) {
-  return L.divIcon({
-    className: '',
-    html: `<svg width="12" height="12"><circle cx="6" cy="6" r="5" fill="${color}" stroke="black"/></svg>`,
-    iconSize: [12, 12],
-    iconAnchor: [6, 6]
-  });
-}
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Interaktive Karte mit Marker-Vorschlägen</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <style>
+    html, body, #map { height: 100%; margin: 0; }
 
-fetch('markers.json')
-  .then(r => r.json())
-  .then(data => {
-    data.forEach((m, i) => {
-      const lat = mapSize - m.coords[1];
-      const lng = m.coords[0];
-      // Falls keine Farbe angegeben, default auf rot
-      const color = m.color || 'red';
-      const icon = createColoredIcon(color);
+    #map {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 250px;
+      bottom: 0;
+      background: #000;
+    }
 
-      const marker = L.marker([lat, lng], {icon}).addTo(map)
-        .bindPopup(`<strong>${m.name}</strong><br>${m.description}<br><em>X: ${m.coords[0]}, Y: ${m.coords[1]}</em>`);
-      
-      leafletMarkers.push(marker);
+    #sidebar {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 250px;
+      height: 100%;
+      background: #f9f9f9;
+      border-left: 1px solid #ccc;
+      overflow-y: auto;
+      padding: 10px;
+      font-family: sans-serif;
+      box-sizing: border-box;
+      z-index: 1100;
+    }
 
-      const li = document.createElement('li');
-      const checkbox = document.createElement('input');
-      checkbox.type = 'checkbox';
-      checkbox.checked = true;
-      checkbox.id = 'marker-' + i;
-      checkbox.onchange = () => {
-        checkbox.checked ? map.addLayer(marker) : map.removeLayer(marker);
-      };
+    #sidebar h2 {
+      margin-top: 0;
+      font-size: 1.2em;
+      text-align: center;
+    }
 
-      const label = document.createElement('label');
-      label.htmlFor = checkbox.id;
-      label.textContent = m.name;
+    #sidebar ul {
+      list-style: none;
+      padding-left: 0;
+    }
 
-      li.appendChild(checkbox);
-      li.appendChild(label);
-      markerList.appendChild(li);
+    #sidebar li {
+      margin: 8px 0;
+      font-size: 0.9em;
+    }
+
+    #sidebar label {
+      cursor: pointer;
+    }
+
+    .coords-box {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      background: rgba(0,0,0,0.7);
+      color: #fff;
+      padding: 5px 10px;
+      font-family: monospace;
+      border-radius: 5px;
+      z-index: 1200;
+    }
+
+    #newMarkerBtn {
+      display: block;
+      width: 100%;
+      margin-bottom: 15px;
+      padding: 10px;
+      font-weight: bold;
+      background: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    #overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1500;
+    }
+
+    #formBox {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      width: 300px;
+    }
+
+    #formBox input, #formBox textarea, #formBox select {
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 6px;
+      box-sizing: border-box;
+    }
+
+    #formBox button {
+      padding: 8px 12px;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      background: #333;
+      color: white;
+      padding: 10px 15px;
+      border-radius: 5px;
+      z-index: 2000;
+      opacity: 0.95;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <div id="sidebar">
+    <button id="newMarkerBtn">Neuen Marker vorschlagen</button>
+    <h2>Marker Übersicht</h2>
+    <ul id="markerList"></ul>
+  </div>
+  <div id="coords" class="coords-box">X: –, Y: –</div>
+
+  <!-- Vorschlagsformular -->
+  <div id="overlay">
+    <div id="formBox">
+      <h3>Neuer Marker</h3>
+      <form id="markerForm">
+        <input type="text" name="markerName" placeholder="Name" required />
+        <textarea name="markerDesc" placeholder="Beschreibung" required></textarea>
+        <select name="markerColor" required>
+          <option value="">Farbe wählen</option>
+          <option value="red">Rot</option>
+          <option value="blue">Blau</option>
+          <option value="green">Grün</option>
+          <option value="orange">Orange</option>
+          <option value="purple">Lila</option>
+        </select>
+        <input type="hidden" name="markerX" />
+        <input type="hidden" name="markerY" />
+        <button type="submit">Absenden</button>
+        <button type="button" onclick="document.getElementById('overlay').style.display='none'">Abbrechen</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const mapSize = 100000;
+    const map = L.map('map', {
+      crs: L.CRS.Simple,
+      minZoom: -7,
+      maxZoom: 4
     });
-  });
+
+    const bounds = [[0, 0], [mapSize, mapSize]];
+    L.imageOverlay('map.png', bounds).addTo(map);
+    map.fitBounds(bounds);
+
+    // Koordinatenanzeige
+    map.on('mousemove', e => {
+      const x = e.latlng.lng.toFixed(1);
+      const y = (mapSize - e.latlng.lat).toFixed(1);
+      document.getElementById('coords').textContent = `X: ${x}, Y: ${y}`;
+    });
+
+    // Funktion für farbiges Marker-Icon
+    function createColoredIcon(color) {
+      return L.divIcon({
+        className: '',
+        html: `<svg width="12" height="12"><circle cx="6" cy="6" r="5" fill="${color}" stroke="black"/></svg>`,
+        iconSize: [12, 12],
+        iconAnchor: [6, 6]
+      });
+    }
+
+    // Marker laden
+    const markerList = document.getElementById('markerList');
+    const leafletMarkers = [];
+
+    fetch('markers.json')
+      .then(r => r.json())
+      .then(data => {
+        data.forEach((m, i) => {
+          const lat = mapSize - m.coords[1];
+          const lng = m.coords[0];
+          const color = m.color || 'red';
+          const icon = createColoredIcon(color);
+
+          const marker = L.marker([lat, lng], { icon }).addTo(map)
+            .bindPopup(`<strong>${m.name}</strong><br>${m.description}<br><em>X: ${m.coords[0]}, Y: ${m.coords[1]}</em>`);
+          leafletMarkers.push(marker);
+
+          const li = document.createElement('li');
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.checked = true;
+          checkbox.id = 'marker-' + i;
+          checkbox.onchange = () => {
+            checkbox.checked ? map.addLayer(marker) : map.removeLayer(marker);
+          };
+
+          const label = document.createElement('label');
+          label.htmlFor = checkbox.id;
+          label.textContent = m.name;
+
+          li.appendChild(checkbox);
+          li.appendChild(label);
+          markerList.appendChild(li);
+        });
+      });
+
+    // Marker erstellen durch Klick
+    map.on('click', e => {
+      const form = document.forms.markerForm;
+      form.markerX.value = e.latlng.lng.toFixed(1);
+      form.markerY.value = (mapSize - e.latlng.lat).toFixed(1);
+      document.getElementById('overlay').style.display = 'flex';
+    });
+
+    // Hinweisfunktion
+    function showToast(message) {
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    // Formular absenden
+    const form = document.getElementById('markerForm');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const name = form.markerName.value.trim();
+      const desc = form.markerDesc.value.trim();
+      const x = Number(form.markerX.value);
+      const y = Number(form.markerY.value);
+      const color = form.markerColor.value;
+
+      if (!name || !desc || !color || isNaN(x) || isNaN(y)) {
+        showToast("Bitte alle Felder korrekt ausfüllen.");
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/submitMarker', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, description: desc, x, y, color })
+        });
+
+        if (!res.ok) throw new Error("Serverfehler");
+        showToast("Vorschlag gesendet!");
+        form.reset();
+        document.getElementById('overlay').style.display = 'none';
+      } catch (err) {
+        showToast("Fehler beim Senden.");
+        console.error(err);
+      }
+    });
+  </script>
+</body>
+</html>
