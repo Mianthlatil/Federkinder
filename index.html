@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Interaktive Karte mit Marker-Typen</title>
+  <title>Interaktive Karte mit Admin-Menü</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <style>
@@ -38,6 +38,20 @@
       border-radius: 5px;
       z-index: 1200;
     }
+    .admin-marker {
+      background: #f3f3f3;
+      border-top: 1px solid #ccc;
+      margin-top: 1em;
+      padding-top: 1em;
+    }
+    button.approve-btn {
+      background: green;
+      color: white;
+      border: none;
+      padding: 5px 8px;
+      margin-top: 5px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -45,6 +59,10 @@
   <div id="sidebar">
     <h2>Marker Übersicht</h2>
     <ul id="markerList"></ul>
+    <div class="admin-marker">
+      <h3>Vorschläge</h3>
+      <ul id="suggestionList"></ul>
+    </div>
   </div>
   <div id="coords" class="coords-box">X: –, Y: –</div>
 
@@ -66,11 +84,10 @@
       document.getElementById('coords').textContent = `X: ${x}, Y: ${y}`;
     });
 
-    // Marker-Icon-Funktion
     function createColorIcon(color = 'gray') {
       return L.divIcon({
         className: '',
-        html: `<svg width="12" height="12"><circle cx="6" cy="6" r="5" fill="${color}" stroke="black"/></svg>`,
+        html: `<svg width=\"12\" height=\"12\"><circle cx=\"6\" cy=\"6\" r=\"5\" fill=\"${color}\" stroke=\"black\"/></svg>` ,
         iconSize: [12, 12],
         iconAnchor: [6, 6]
       });
@@ -87,6 +104,7 @@
     }
 
     const markerList = document.getElementById('markerList');
+    const suggestionList = document.getElementById('suggestionList');
 
     fetch('markers.json')
       .then(r => r.json())
@@ -116,6 +134,27 @@
           li.appendChild(checkbox);
           li.appendChild(label);
           markerList.appendChild(li);
+        });
+      });
+
+    fetch('suggestions.json')
+      .then(r => r.json())
+      .then(suggestions => {
+        suggestions.forEach((s, i) => {
+          const li = document.createElement('li');
+          li.innerHTML = `<strong>${s.name}</strong><br>${s.description}<br><em>X: ${s.x}, Y: ${s.y}</em><br>`;
+
+          const btn = document.createElement('button');
+          btn.textContent = 'Annehmen';
+          btn.className = 'approve-btn';
+          btn.onclick = () => {
+            // Hier würdest du normalerweise einen POST-Request an deinen Server senden
+            alert(`Vorschlag "${s.name}" angenommen!`);
+            li.remove();
+          };
+
+          li.appendChild(btn);
+          suggestionList.appendChild(li);
         });
       });
   </script>
