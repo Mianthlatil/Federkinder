@@ -76,5 +76,23 @@
     "coords": [60208, 70237],
     "description": "Eine Basis von Shadow, Lyuien, Khartif",
     "color": "red"
+  },
+  {
+    "name": "Perways Base",
+    "coords": [41728, 47760],
+    "description": "Meine Basis",
+    "color": "red"
+  },
+  {
+    "name": "Perways Base",
+    "coords": [46592, 33760],
+    "description": "Wasseroase",
+    "color": "red"
+  },
+  {
+    "name": "Unterschlupf für Rift Erkundung (FreeDive)",
+    "coords": [53816, 22664],
+    "description": "Alles was drin ist darf benutzt werden, Tor muss noch für Buggies optimiert werden",
+    "color": "red"
   }
 ]
