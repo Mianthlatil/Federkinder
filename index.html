@@ -53,9 +53,8 @@
       cursor: pointer;
     }
 
-    .coords-box {
+    .coords-box, .hint-box {
       position: absolute;
-      bottom: 10px;
       left: 10px;
       background: rgba(0,0,0,0.7);
       color: #fff;
@@ -63,6 +62,19 @@
       font-family: monospace;
       border-radius: 5px;
       z-index: 1200;
+    }
+
+    .coords-box {
+      bottom: 10px;
+    }
+
+    .hint-box {
+      bottom: 50px;
+      background: rgba(255, 255, 255, 0.95);
+      color: #333;
+      font-family: sans-serif;
+      font-size: 14px;
+      box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
     }
 
     #newMarkerBtn {
@@ -105,18 +117,6 @@
     #formBox button {
       padding: 8px 12px;
     }
-
-    .toast {
-      position: fixed;
-      bottom: 20px;
-      left: 20px;
-      background: #333;
-      color: white;
-      padding: 10px 15px;
-      border-radius: 5px;
-      z-index: 2000;
-      opacity: 0.95;
-    }
   </style>
 </head>
 <body>
@@ -127,6 +127,9 @@
     <ul id="markerList"></ul>
   </div>
   <div id="coords" class="coords-box">X: –, Y: –</div>
+  <div id="hint" class="hint-box" style="display:none;">
+    Klicke auf die Karte, um die Markerposition auszuwählen.
+  </div>
 
   <!-- Vorschlagsformular -->
   <div id="overlay">
@@ -136,11 +139,11 @@
         <input type="text" name="markerName" placeholder="Name" required />
         <textarea name="markerDesc" placeholder="Beschreibung" required></textarea>
         <select name="markerColor" required>
-          <option value="">Farbe wählen</option>
+          <option value="" disabled selected>Farbe wählen</option>
           <option value="red">Rot</option>
-          <option value="blue">Blau</option>
           <option value="green">Grün</option>
-          <option value="orange">Orange</option>
+          <option value="blue">Blau</option>
+          <option value="yellow">Gelb</option>
           <option value="purple">Lila</option>
         </select>
         <input type="hidden" name="markerX" />
@@ -163,15 +166,12 @@
     L.imageOverlay('map.png', bounds).addTo(map);
     map.fitBounds(bounds);
 
-    // Koordinatenanzeige
-    map.on('mousemove', e => {
-      const x = e.latlng.lng.toFixed(1);
-      const y = (mapSize - e.latlng.lat).toFixed(1);
-      document.getElementById('coords').textContent = `X: ${x}, Y: ${y}`;
-    });
+    const form = document.getElementById('markerForm');
+    const markerList = document.getElementById('markerList');
+    const leafletMarkers = [];
 
-    // Funktion für farbiges Marker-Icon
-    function createColoredIcon(color) {
+    // Markerfarben-Icons dynamisch
+    function createIcon(color) {
       return L.divIcon({
         className: '',
         html: `<svg width="12" height="12"><circle cx="6" cy="6" r="5" fill="${color}" stroke="black"/></svg>`,
@@ -180,20 +180,23 @@
       });
     }
 
-    // Marker laden
-    const markerList = document.getElementById('markerList');
-    const leafletMarkers = [];
+    // Koordinatenanzeige
+    map.on('mousemove', e => {
+      const x = e.latlng.lng.toFixed(1);
+      const y = (mapSize - e.latlng.lat).toFixed(1);
+      document.getElementById('coords').textContent = `X: ${x}, Y: ${y}`;
+    });
 
+    // Bestehende Marker laden
     fetch('markers.json')
       .then(r => r.json())
       .then(data => {
         data.forEach((m, i) => {
           const lat = mapSize - m.coords[1];
           const lng = m.coords[0];
-          const color = m.color || 'red';
-          const icon = createColoredIcon(color);
-
-          const marker = L.marker([lat, lng], { icon }).addTo(map)
+          const marker = L.marker([lat, lng], {
+            icon: createIcon(m.color || "red")
+          }).addTo(map)
             .bindPopup(`<strong>${m.name}</strong><br>${m.description}<br><em>X: ${m.coords[0]}, Y: ${m.coords[1]}</em>`);
           leafletMarkers.push(marker);
 
@@ -216,53 +219,54 @@
         });
       });
 
-    // Marker erstellen durch Klick
-    map.on('click', e => {
-      const form = document.forms.markerForm;
-      form.markerX.value = e.latlng.lng.toFixed(1);
-      form.markerY.value = (mapSize - e.latlng.lat).toFixed(1);
+    // Markerplatzierung
+    let awaitingMapClick = false;
+
+    document.getElementById('newMarkerBtn').onclick = () => {
+      awaitingMapClick = true;
+      document.getElementById('hint').style.display = 'block';
+    };
+
+    map.on('click', (e) => {
+      if (!awaitingMapClick) return;
+      awaitingMapClick = false;
+      document.getElementById('hint').style.display = 'none';
+
+      const x = e.latlng.lng.toFixed(1);
+      const y = (mapSize - e.latlng.lat).toFixed(1);
+
+      form.markerX.value = x;
+      form.markerY.value = y;
       document.getElementById('overlay').style.display = 'flex';
     });
 
-    // Hinweisfunktion
-    function showToast(message) {
-      const toast = document.createElement('div');
-      toast.className = 'toast';
-      toast.textContent = message;
-      document.body.appendChild(toast);
-      setTimeout(() => toast.remove(), 3000);
-    }
-
-    // Formular absenden
-    const form = document.getElementById('markerForm');
+    // Marker absenden
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
 
       const name = form.markerName.value.trim();
       const desc = form.markerDesc.value.trim();
+      const color = form.markerColor.value;
       const x = Number(form.markerX.value);
       const y = Number(form.markerY.value);
-      const color = form.markerColor.value;
 
-      if (!name || !desc || !color || isNaN(x) || isNaN(y)) {
-        showToast("Bitte alle Felder korrekt ausfüllen.");
-        return;
-      }
+      if (!name || !desc || !color || isNaN(x) || isNaN(y)) return;
 
       try {
         const res = await fetch('/api/submitMarker', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, description: desc, x, y, color })
+          body: JSON.stringify({ name, description: desc, color, x, y })
         });
 
-        if (!res.ok) throw new Error("Serverfehler");
-        showToast("Vorschlag gesendet!");
-        form.reset();
-        document.getElementById('overlay').style.display = 'none';
+        if (res.ok) {
+          form.reset();
+          document.getElementById('overlay').style.display = 'none';
+        } else {
+          console.error("Fehler beim Absenden.");
+        }
       } catch (err) {
-        showToast("Fehler beim Senden.");
-        console.error(err);
+        console.error("Verbindung fehlgeschlagen.", err);
       }
     });
   </script>
