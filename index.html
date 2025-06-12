@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="utf-8" />
-  <title>Interaktive Karte mit farbigen Marker-Gruppen</title>
+  <title>Interaktive Karte mit Gilden Basen und Markern</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link
     rel="stylesheet"
@@ -100,91 +100,115 @@
       document.getElementById('coords').textContent = `X: ${x}, Y: ${y}`;
     });
 
-    // Icon-Factory: erstellt ein farbiges SVG-Icon
+    // Kleinere, kräftige Icons
     function createIcon(color) {
       return L.divIcon({
         className: '',
-        html: `<svg width="14" height="14"><circle cx="7" cy="7" r="6" fill="${color}" stroke="black"/></svg>`,
-        iconSize: [14, 14],
-        iconAnchor: [7, 7],
+        html: `<svg width="10" height="10" viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg">
+                 <circle cx="5" cy="5" r="5" fill="${color}" stroke="#222" stroke-width="1"/>
+               </svg>`,
+        iconSize: [10, 10],
+        iconAnchor: [5, 5],
       });
     }
 
-    // Sidebar Container für Marker Gruppen
     const markerGroupsContainer = document.getElementById('markerGroups');
-
-    // Marker-Array für Kontrolle auf der Karte
     const leafletMarkers = [];
 
-    // Hilfsfunktion, um einen Farb-Namen in eine CSS-Farbe zu übersetzen (kann beliebig erweitert werden)
     function colorNameToHex(colorName) {
       const map = {
-        red: '#e63946',
-        green: '#2a9d8f',
-        blue: '#457b9d',
-        yellow: '#f4a261',
-        orange: '#e76f51',
-        purple: '#6a4c93',
-        pink: '#d45d79',
-        brown: '#8d5524',
-        gray: '#6c757d',
+        red: '#d62728',
+        green: '#1a9d37', // kräftiges Grün
+        blue: '#1f77b4',
+        yellow: '#ffbb00',
+        orange: '#ff7f0e',
+        purple: '#9467bd',
+        pink: '#e377c2',
+        brown: '#8c564b',
+        gray: '#7f7f7f',
       };
-      return map[colorName.toLowerCase()] || colorName; // Fallback: einfach den String
+      return map[colorName.toLowerCase()] || colorName;
     }
 
-    // Marker laden
     fetch('markers.json')
       .then((r) => r.json())
       .then((data) => {
-        // Gruppen nach Farbe erstellen
-        const groups = {};
-        data.forEach((m) => {
-          const c = m.color || 'gray';
-          if (!groups[c]) groups[c] = [];
-          groups[c].push(m);
+        // Aufteilen in zwei Gruppen: grün = "Gilden Basen", andere = "Marker"
+        const gildenBasen = data.filter((m) => (m.color || '').toLowerCase() === 'green');
+        const andereMarker = data.filter((m) => (m.color || '').toLowerCase() !== 'green');
+
+        // Gruppe Gilden Basen
+        const gildenHeader = document.createElement('h2');
+        gildenHeader.innerHTML = `<span style="display:inline-block;width:12px;height:12px;background:${colorNameToHex('green')};border-radius:50%;margin-right:8px;vertical-align:middle;"></span>Gilden Basen`;
+        markerGroupsContainer.appendChild(gildenHeader);
+        const gildenUl = document.createElement('ul');
+        markerGroupsContainer.appendChild(gildenUl);
+
+        gildenBasen.forEach((markerData) => {
+          const lat = mapSize - markerData.coords[1];
+          const lng = markerData.coords[0];
+          const colorHex = colorNameToHex(markerData.color || 'green');
+          const icon = createIcon(colorHex);
+          const marker = L.marker([lat, lng], { icon }).addTo(map)
+            .bindPopup(
+              `<strong>${markerData.name}</strong><br>${markerData.description}<br><em>X: ${markerData.coords[0]}, Y: ${markerData.coords[1]}</em>`
+            );
+          leafletMarkers.push(marker);
+
+          const li = document.createElement('li');
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.checked = true;
+          const id = 'marker-' + Math.random().toString(36).substr(2, 9);
+          checkbox.id = id;
+          checkbox.onchange = () => {
+            checkbox.checked ? map.addLayer(marker) : map.removeLayer(marker);
+          };
+
+          const label = document.createElement('label');
+          label.htmlFor = id;
+          label.textContent = markerData.name;
+
+          li.appendChild(checkbox);
+          li.appendChild(label);
+          gildenUl.appendChild(li);
         });
 
-        // Für jede Farbgruppe eine Überschrift + Liste erzeugen
-        Object.entries(groups).forEach(([color, markers]) => {
-          // Farbe in Hex oder CSS
-          const colorHex = colorNameToHex(color);
+        // Gruppe Marker (alle anderen Farben)
+        const markerHeader = document.createElement('h2');
+        markerHeader.innerHTML = `<span style="display:inline-block;width:12px;height:12px;background:#666;border-radius:50%;margin-right:8px;vertical-align:middle;"></span>Marker`;
+        markerGroupsContainer.appendChild(markerHeader);
+        const markerUl = document.createElement('ul');
+        markerGroupsContainer.appendChild(markerUl);
 
-          // Überschrift mit farbigem Punkt davor
-          const header = document.createElement('h2');
-          header.innerHTML = `<span style="display:inline-block;width:12px;height:12px;background:${colorHex};border-radius:50%;margin-right:8px;vertical-align:middle;"></span> ${color.charAt(0).toUpperCase() + color.slice(1)}`;
-          markerGroupsContainer.appendChild(header);
+        andereMarker.forEach((markerData) => {
+          const lat = mapSize - markerData.coords[1];
+          const lng = markerData.coords[0];
+          const colorHex = colorNameToHex(markerData.color || '#666');
+          const icon = createIcon(colorHex);
+          const marker = L.marker([lat, lng], { icon }).addTo(map)
+            .bindPopup(
+              `<strong>${markerData.name}</strong><br>${markerData.description}<br><em>X: ${markerData.coords[0]}, Y: ${markerData.coords[1]}</em>`
+            );
+          leafletMarkers.push(marker);
 
-          const ul = document.createElement('ul');
-          markerGroupsContainer.appendChild(ul);
+          const li = document.createElement('li');
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.checked = true;
+          const id = 'marker-' + Math.random().toString(36).substr(2, 9);
+          checkbox.id = id;
+          checkbox.onchange = () => {
+            checkbox.checked ? map.addLayer(marker) : map.removeLayer(marker);
+          };
 
-          markers.forEach((markerData) => {
-            const lat = mapSize - markerData.coords[1];
-            const lng = markerData.coords[0];
-            const icon = createIcon(colorHex);
-            const marker = L.marker([lat, lng], { icon }).addTo(map)
-              .bindPopup(
-                `<strong>${markerData.name}</strong><br>${markerData.description}<br><em>X: ${markerData.coords[0]}, Y: ${markerData.coords[1]}</em>`
-              );
-            leafletMarkers.push(marker);
+          const label = document.createElement('label');
+          label.htmlFor = id;
+          label.textContent = markerData.name;
 
-            const li = document.createElement('li');
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.checked = true;
-            const id = 'marker-' + Math.random().toString(36).substr(2, 9);
-            checkbox.id = id;
-            checkbox.onchange = () => {
-              checkbox.checked ? map.addLayer(marker) : map.removeLayer(marker);
-            };
-
-            const label = document.createElement('label');
-            label.htmlFor = id;
-            label.textContent = markerData.name;
-
-            li.appendChild(checkbox);
-            li.appendChild(label);
-            ul.appendChild(li);
-          });
+          li.appendChild(checkbox);
+          li.appendChild(label);
+          markerUl.appendChild(li);
         });
       })
       .catch((err) => {
