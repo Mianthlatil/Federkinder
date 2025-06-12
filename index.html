@@ -1,108 +1,52 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Marker Vorschlag per Klick</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<style>
-  html, body, #map { height: 100%; margin: 0; }
-  #map {
-    position: absolute;
-    top: 0; left: 0; right: 250px; bottom: 0;
-    background: #000;
-  }
-  #sidebar {
-    position: absolute;
-    top: 0; right: 0;
-    width: 250px; height: 100%;
-    background: #f9f9f9;
-    border-left: 1px solid #ccc;
-    padding: 10px;
-    font-family: sans-serif;
-    box-sizing: border-box;
-    z-index: 1100;
-  }
-  #coords {
-    position: absolute;
-    bottom: 10px; left: 10px;
-    background: rgba(0,0,0,0.7);
-    color: white;
-    padding: 5px 10px;
-    font-family: monospace;
-    border-radius: 5px;
-    z-index: 1200;
-  }
-  #newMarkerBtn {
-    display: block;
-    width: 100%;
-    margin-bottom: 15px;
-    padding: 10px;
-    background: #007bff;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    font-weight: bold;
-    cursor: pointer;
-  }
-  #overlay {
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.6);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 1500;
-  }
-  #formBox {
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    width: 300px;
-  }
-  #formBox input, #formBox textarea {
-    width: 100%;
-    margin-bottom: 10px;
-    padding: 6px;
-    box-sizing: border-box;
-  }
-  #formBox button {
-    padding: 8px 12px;
-    margin-right: 5px;
-  }
-  #infoMessage {
-    margin-top: 10px;
-    color: green;
-    font-weight: bold;
-  }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Interaktive Karte</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <style>
+    html, body, #map { height: 100%; margin: 0; }
+    #map { position: absolute; top: 0; left: 0; right: 250px; bottom: 0; background: #000; }
+    #sidebar {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 250px;
+      height: 100%;
+      background: #f9f9f9;
+      border-left: 1px solid #ccc;
+      overflow-y: auto;
+      padding: 10px;
+      font-family: sans-serif;
+      box-sizing: border-box;
+      z-index: 1100;
+    }
+    #sidebar h2 { margin-top: 0; font-size: 1.2em; text-align: center; }
+    #sidebar ul { list-style: none; padding-left: 0; }
+    #sidebar li { margin: 8px 0; font-size: 0.9em; }
+    #sidebar label { cursor: pointer; }
+    .coords-box {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      background: rgba(0,0,0,0.7);
+      color: #fff;
+      padding: 5px 10px;
+      font-family: monospace;
+      border-radius: 5px;
+      z-index: 1200;
+    }
+  </style>
 </head>
 <body>
   <div id="map"></div>
   <div id="sidebar">
-    <button id="newMarkerBtn">Neuen Marker vorschlagen</button>
     <h2>Marker Übersicht</h2>
     <ul id="markerList"></ul>
   </div>
-  <div id="coords">X: –, Y: –</div>
-
-  <!-- Formular Overlay -->
-  <div id="overlay">
-    <div id="formBox">
-      <h3>Neuen Marker vorschlagen</h3>
-      <form id="markerForm">
-        <input type="text" name="markerName" placeholder="Name" required />
-        <textarea name="markerDesc" placeholder="Beschreibung" required></textarea>
-        <!-- Koordinaten werden automatisch ausgefüllt -->
-        <input type="hidden" name="markerX" />
-        <input type="hidden" name="markerY" />
-        <button type="submit">Absenden</button>
-        <button type="button" id="cancelBtn">Abbrechen</button>
-      </form>
-      <div id="infoMessage"></div>
-    </div>
-  </div>
+  <div id="coords" class="coords-box">X: –, Y: –</div>
 
   <script>
     const mapSize = 100000;
@@ -116,23 +60,47 @@
     L.imageOverlay('map.png', bounds).addTo(map);
     map.fitBounds(bounds);
 
-    const coordsDisplay = document.getElementById('coords');
     map.on('mousemove', e => {
       const x = e.latlng.lng.toFixed(1);
       const y = (mapSize - e.latlng.lat).toFixed(1);
-      coordsDisplay.textContent = `X: ${x}, Y: ${y}`;
+      document.getElementById('coords').textContent = `X: ${x}, Y: ${y}`;
     });
 
-    // Marker Übersicht (nur laden, keine Vorschläge anzeigen)
+    function createColorIcon(color = 'gray') {
+      return L.divIcon({
+        className: '',
+        html: `<svg width="12" height="12"><circle cx="6" cy="6" r="5" fill="${color}" stroke="black"/></svg>`,
+        iconSize: [12, 12],
+        iconAnchor: [6, 6]
+      });
+    }
+
+    function getColorByType(type) {
+      switch (type.toLowerCase()) {
+        case 'gilde': return 'green';
+        case 'player': return 'blue';
+        case 'rot': return 'red';
+        case 'lila': return 'purple';
+        case 'orange': return 'orange';
+        case 'black': return 'black';
+        default: return 'gray';
+      }
+    }
+
     const markerList = document.getElementById('markerList');
+
     fetch('markers.json')
       .then(r => r.json())
       .then(data => {
         data.forEach((m, i) => {
           const lat = mapSize - m.coords[1];
           const lng = m.coords[0];
-          const marker = L.marker([lat, lng]).addTo(map).bindPopup(`<strong>${m.name}</strong><br>${m.description}<br><em>X: ${m.coords[0]}, Y: ${m.coords[1]}</em>`);
-          
+          const color = getColorByType(m.type);
+          const icon = createColorIcon(color);
+
+          const marker = L.marker([lat, lng], { icon }).addTo(map)
+            .bindPopup(`<strong>${m.name}</strong><br>${m.description}<br><em>X: ${m.coords[0]}, Y: ${m.coords[1]}</em>`);
+
           const li = document.createElement('li');
           const checkbox = document.createElement('input');
           checkbox.type = 'checkbox';
@@ -141,88 +109,16 @@
           checkbox.onchange = () => {
             checkbox.checked ? map.addLayer(marker) : map.removeLayer(marker);
           };
+
           const label = document.createElement('label');
           label.htmlFor = checkbox.id;
           label.textContent = m.name;
+
           li.appendChild(checkbox);
           li.appendChild(label);
           markerList.appendChild(li);
         });
       });
-
-    const overlay = document.getElementById('overlay');
-    const form = document.getElementById('markerForm');
-    const infoMessage = document.getElementById('infoMessage');
-    const cancelBtn = document.getElementById('cancelBtn');
-    let suggestMode = false;
-    let selectedCoords = null;
-
-    document.getElementById('newMarkerBtn').addEventListener('click', () => {
-      suggestMode = true;
-      infoMessage.textContent = 'Bitte auf die Karte klicken, um den Marker-Standort zu wählen.';
-      overlay.style.display = 'none';
-    });
-
-    map.on('click', e => {
-      if (!suggestMode) return;
-
-      suggestMode = false;
-      const x = e.latlng.lng.toFixed(1);
-      const y = (mapSize - e.latlng.lat).toFixed(1);
-      selectedCoords = { x, y };
-
-      // Formular vorbereiten und anzeigen
-      form.markerX.value = x;
-      form.markerY.value = y;
-      form.markerName.value = '';
-      form.markerDesc.value = '';
-      infoMessage.textContent = '';
-      overlay.style.display = 'flex';
-    });
-
-    cancelBtn.addEventListener('click', () => {
-      overlay.style.display = 'none';
-      infoMessage.textContent = '';
-    });
-
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      const name = form.markerName.value.trim();
-      const desc = form.markerDesc.value.trim();
-      const x = Number(form.markerX.value);
-      const y = Number(form.markerY.value);
-
-      if (!name || !desc || isNaN(x) || isNaN(y)) {
-        infoMessage.style.color = 'red';
-        infoMessage.textContent = 'Bitte alle Felder korrekt ausfüllen.';
-        return;
-      }
-
-      try {
-        const res = await fetch('/api/submitmarkers', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, description: desc, x, y })
-        });
-
-        if (!res.ok) throw new Error('Serverfehler');
-
-        infoMessage.style.color = 'green';
-        infoMessage.textContent = 'Vorschlag erfolgreich gesendet!';
-        form.reset();
-
-        setTimeout(() => {
-          overlay.style.display = 'none';
-          infoMessage.textContent = '';
-        }, 2500);
-
-      } catch (err) {
-        infoMessage.style.color = 'red';
-        infoMessage.textContent = 'Fehler beim Senden des Vorschlags.';
-        console.error(err);
-      }
-    });
   </script>
 </body>
 </html>
