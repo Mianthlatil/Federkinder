@@ -88,12 +88,12 @@
     "description": "Abreißbar falls es zu eng wird"
   },
     {
-    "name": "Siv Base",
+    "name": "Startbase am Handelsposten",
     "coords": [
-      67700,
-      56200
+      59200,
+      82656
     ],
-    "description": "erstmal nur Wasser offen bis zur Fertigstellung"
+    "description": " alles was hier drin ist kann genutzt werden"
   },
     {
     "name": "3er Gilden-Base",
