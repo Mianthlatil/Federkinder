@@ -123,8 +123,8 @@
       <form id="markerForm">
         <input type="text" name="markerName" placeholder="Name" required />
         <textarea name="markerDesc" placeholder="Beschreibung" required></textarea>
-        <input type="number" name="markerX" placeholder="X-Koordinate" required />
-        <input type="number" name="markerY" placeholder="Y-Koordinate" required />
+        <input type="number" name="markerX" placeholder="X-Koordinate" required min="0" max="100000" step="1" />
+        <input type="number" name="markerY" placeholder="Y-Koordinate" required min="0" max="100000" step="1" />
         <button type="submit">Absenden</button>
         <button type="button" onclick="document.getElementById('overlay').style.display='none'">Abbrechen</button>
       </form>
@@ -150,13 +150,15 @@
       document.getElementById('coords').textContent = `X: ${x}, Y: ${y}`;
     });
 
-    // Marker-Icons
-    const icon = L.divIcon({
-      className: '',
-      html: `<svg width="12" height="12"><circle cx="6" cy="6" r="5" fill="red" stroke="black"/></svg>`,
-      iconSize: [12, 12],
-      iconAnchor: [6, 6]
-    });
+    // Marker-Icon Generator (verschiedene Farben)
+    function getIcon(color = 'red') {
+      return L.divIcon({
+        className: '',
+        html: `<svg width="12" height="12"><circle cx="6" cy="6" r="5" fill="${color}" stroke="black"/></svg>`,
+        iconSize: [12, 12],
+        iconAnchor: [6, 6]
+      });
+    }
 
     // Marker laden
     const markerList = document.getElementById('markerList');
@@ -168,7 +170,7 @@
         data.forEach((m, i) => {
           const lat = mapSize - m.coords[1];
           const lng = m.coords[0];
-          const marker = L.marker([lat, lng], {icon}).addTo(map)
+          const marker = L.marker([lat, lng], { icon: getIcon('red') }).addTo(map)
             .bindPopup(`<strong>${m.name}</strong><br>${m.description}<br><em>X: ${m.coords[0]}, Y: ${m.coords[1]}</em>`);
           leafletMarkers.push(marker);
 
@@ -211,6 +213,11 @@
         return;
       }
 
+      if (x < 0 || x > mapSize || y < 0 || y > mapSize) {
+        alert("Koordinaten müssen zwischen 0 und " + mapSize + " liegen.");
+        return;
+      }
+
       try {
         const res = await fetch('/api/submitMarker', {
           method: 'POST',
@@ -219,9 +226,20 @@
         });
 
         if (!res.ok) throw new Error("Serverfehler");
-        alert("Vorschlag gesendet!");
+
         form.reset();
         document.getElementById('overlay').style.display = 'none';
+
+        const notice = document.createElement('div');
+        notice.textContent = "Vorschlag gesendet!";
+        notice.style.background = "#d4edda";
+        notice.style.color = "#155724";
+        notice.style.padding = "10px";
+        notice.style.marginTop = "10px";
+        notice.style.borderRadius = "5px";
+        notice.style.border = "1px solid #c3e6cb";
+        document.getElementById('sidebar').appendChild(notice);
+        setTimeout(() => notice.remove(), 5000);
       } catch (err) {
         alert("Fehler beim Senden des Vorschlags.");
         console.error(err);
