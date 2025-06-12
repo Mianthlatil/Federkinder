@@ -1,20 +1,22 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Interaktive Karte</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <style>
     html, body, #map { height: 100%; margin: 0; }
-    #map { position: absolute; top: 0; left: 0; right: 250px; bottom: 0; background: #000; }
+    #map {
+      position: absolute;
+      top: 0; left: 0; right: 250px; bottom: 0;
+      background: #000;
+    }
     #sidebar {
       position: absolute;
-      top: 0;
-      right: 0;
-      width: 250px;
-      height: 100%;
+      top: 0; right: 0;
+      width: 250px; height: 100%;
       background: #f9f9f9;
       border-left: 1px solid #ccc;
       overflow-y: auto;
@@ -23,14 +25,25 @@
       box-sizing: border-box;
       z-index: 1100;
     }
-    #sidebar h2 { margin-top: 0; font-size: 1.2em; text-align: center; }
-    #sidebar ul { list-style: none; padding-left: 0; }
-    #sidebar li { margin: 8px 0; font-size: 0.9em; }
-    #sidebar label { cursor: pointer; }
+    #sidebar h2 {
+      margin-top: 0;
+      font-size: 1.2em;
+      text-align: center;
+    }
+    #sidebar ul {
+      list-style: none;
+      padding-left: 0;
+    }
+    #sidebar li {
+      margin: 8px 0;
+      font-size: 0.9em;
+    }
+    #sidebar label {
+      cursor: pointer;
+    }
     .coords-box {
       position: absolute;
-      bottom: 10px;
-      left: 10px;
+      bottom: 10px; left: 10px;
       background: rgba(0,0,0,0.7);
       color: #fff;
       padding: 5px 10px;
@@ -38,56 +51,82 @@
       border-radius: 5px;
       z-index: 1200;
     }
-    .suggestion-section {
-      margin-top: 20px;
-      border-top: 1px solid #ccc;
-      padding-top: 10px;
-    }
-    .approve-btn {
-      margin-top: 5px;
-      background-color: green;
-      color: white;
-      border: none;
-      padding: 5px 8px;
-      cursor: pointer;
-    }
-    .suggest-btn {
+    #newMarkerBtn {
+      display: block;
       width: 100%;
-      padding: 8px;
-      margin-bottom: 10px;
-      background-color: #007bff;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-    .form-popup {
-      position: absolute;
-      z-index: 1500;
-      background: white;
-      border: 1px solid #ccc;
+      margin-bottom: 15px;
       padding: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.3);
-      font-size: 14px;
+      font-weight: bold;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
     }
-    .form-popup input, .form-popup textarea {
+    #overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1500;
+    }
+    #formBox {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      width: 300px;
+      box-sizing: border-box;
+    }
+    #formBox input, #formBox textarea {
       width: 100%;
-      margin-bottom: 5px;
+      margin-bottom: 10px;
+      padding: 6px;
+      box-sizing: border-box;
+    }
+    #formBox button {
+      padding: 8px 12px;
+      margin-right: 10px;
+    }
+    .form-message {
+      margin-top: 8px;
+      font-weight: bold;
+    }
+    .form-message.error {
+      color: red;
+    }
+    .form-message.success {
+      color: green;
     }
   </style>
 </head>
 <body>
   <div id="map"></div>
   <div id="sidebar">
+    <button id="newMarkerBtn">Neuen Marker vorschlagen</button>
     <h2>Marker Übersicht</h2>
-    <button id="suggestBtn" class="suggest-btn">Marker vorschlagen</button>
     <ul id="markerList"></ul>
-
-    <div class="suggestion-section">
-      <h3>Vorschläge</h3>
-      <ul id="suggestionList"></ul>
-    </div>
   </div>
   <div id="coords" class="coords-box">X: –, Y: –</div>
+
+  <!-- Vorschlagsformular Overlay -->
+  <div id="overlay">
+    <div id="formBox">
+      <h3>Neuer Marker</h3>
+      <form id="markerForm">
+        <input type="text" name="markerName" placeholder="Name" required />
+        <textarea name="markerDesc" placeholder="Beschreibung" required></textarea>
+        <input type="number" name="markerX" placeholder="X-Koordinate" required />
+        <input type="number" name="markerY" placeholder="Y-Koordinate" required />
+        <div>
+          <button type="submit">Absenden</button>
+          <button type="button" id="cancelBtn">Abbrechen</button>
+        </div>
+        <div id="formMessage" class="form-message"></div>
+      </form>
+    </div>
+  </div>
 
   <script>
     const mapSize = 100000;
@@ -101,13 +140,15 @@
     L.imageOverlay('map.png', bounds).addTo(map);
     map.fitBounds(bounds);
 
+    // Koordinatenanzeige
     map.on('mousemove', e => {
       const x = e.latlng.lng.toFixed(1);
       const y = (mapSize - e.latlng.lat).toFixed(1);
       document.getElementById('coords').textContent = `X: ${x}, Y: ${y}`;
     });
 
-    function createColorIcon(color = 'gray') {
+    // Marker Icons
+    function createColorIcon(color = 'red') {
       return L.divIcon({
         className: '',
         html: `<svg width="12" height="12"><circle cx="6" cy="6" r="5" fill="${color}" stroke="black"/></svg>`,
@@ -116,30 +157,15 @@
       });
     }
 
-    function getColorByType(type) {
-      switch ((type || '').toLowerCase()) {
-        case 'gilde': return 'green';
-        case 'player': return 'blue';
-        case 'rot': return 'red';
-        case 'lila': return 'purple';
-        case 'orange': return 'orange';
-        case 'black': return 'black';
-        default: return 'gray';
-      }
-    }
-
+    // Marker laden
     const markerList = document.getElementById('markerList');
-    const suggestionList = document.getElementById('suggestionList');
-
     fetch('markers.json')
       .then(r => r.json())
       .then(data => {
         data.forEach((m, i) => {
           const lat = mapSize - m.coords[1];
           const lng = m.coords[0];
-          const color = getColorByType(m.type);
-          const icon = createColorIcon(color);
-
+          const icon = createColorIcon(m.type ? m.type.toLowerCase() : 'red');
           const marker = L.marker([lat, lng], { icon }).addTo(map)
             .bindPopup(`<strong>${m.name}</strong><br>${m.description}<br><em>X: ${m.coords[0]}, Y: ${m.coords[1]}</em>`);
 
@@ -151,7 +177,6 @@
           checkbox.onchange = () => {
             checkbox.checked ? map.addLayer(marker) : map.removeLayer(marker);
           };
-
           const label = document.createElement('label');
           label.htmlFor = checkbox.id;
           label.textContent = m.name;
@@ -162,69 +187,73 @@
         });
       });
 
-    fetch('suggestions.json')
-      .then(r => r.json())
-      .then(suggestions => {
-        suggestions.forEach((s, i) => {
-          const li = document.createElement('li');
-          li.innerHTML = `<strong>${s.name}</strong><br>${s.description}<br><em>X: ${s.x}, Y: ${s.y}</em><br>`;
+    // Overlay & Formular
+    const overlay = document.getElementById('overlay');
+    const form = document.getElementById('markerForm');
+    const formMessage = document.getElementById('formMessage');
+    const cancelBtn = document.getElementById('cancelBtn');
 
-          const btn = document.createElement('button');
-          btn.textContent = 'Annehmen';
-          btn.className = 'approve-btn';
-          btn.onclick = () => {
-            alert(`Vorschlag "${s.name}" angenommen!`);
-            li.remove();
-          };
+    document.getElementById('newMarkerBtn').onclick = () => {
+      form.reset();
+      formMessage.textContent = '';
+      formMessage.className = 'form-message';
+      overlay.style.display = 'flex';
+    };
 
-          li.appendChild(btn);
-          suggestionList.appendChild(li);
+    cancelBtn.onclick = () => {
+      overlay.style.display = 'none';
+    };
+
+    // Formular senden und an Discord Webhook via API schicken
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+
+      const name = form.markerName.value.trim();
+      const description = form.markerDesc.value.trim();
+      const x = Number(form.markerX.value);
+      const y = Number(form.markerY.value);
+
+      if (!name || !description || isNaN(x) || isNaN(y)) {
+        showMessage('Bitte gültige Daten eingeben.', 'error');
+        return;
+      }
+
+      // Buttons deaktivieren beim Senden
+      toggleFormButtons(false);
+
+      try {
+        const res = await fetch('/api/submitmarkers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, description, x, y })
         });
+
+        if (!res.ok) throw new Error('Serverfehler');
+
+        showMessage('Vorschlag gesendet! Danke.', 'success');
+        form.reset();
+
+        setTimeout(() => {
+          overlay.style.display = 'none';
+          formMessage.textContent = '';
+        }, 2500);
+      } catch (err) {
+        showMessage('Fehler beim Senden: ' + err.message, 'error');
+      } finally {
+        toggleFormButtons(true);
+      }
+    });
+
+    function showMessage(text, type) {
+      formMessage.textContent = text;
+      formMessage.className = 'form-message ' + (type === 'error' ? 'error' : 'success');
+    }
+
+    function toggleFormButtons(enabled) {
+      form.querySelectorAll('button').forEach(btn => {
+        btn.disabled = !enabled;
       });
-
-    // Marker-Vorschlagen-Funktionalität
-    let suggestMode = false;
-    document.getElementById('suggestBtn').addEventListener('click', () => {
-      suggestMode = true;
-      alert('Bitte wähle einen Ort auf der Karte für deinen Marker.');
-    });
-
-    map.on('click', e => {
-      if (!suggestMode) return;
-      suggestMode = false;
-
-      const x = e.latlng.lng.toFixed(1);
-      const y = (mapSize - e.latlng.lat).toFixed(1);
-
-      const form = document.createElement('div');
-      form.className = 'form-popup';
-      form.style.left = e.originalEvent.pageX + 'px';
-      form.style.top = e.originalEvent.pageY + 'px';
-
-      form.innerHTML = `
-        <strong>Neuer Marker</strong><br>
-        <input type="text" id="markerName" placeholder="Name"><br>
-        <textarea id="markerDesc" placeholder="Beschreibung"></textarea><br>
-        <button id="submitMarker">Senden</button>
-        <button id="cancelMarker">Abbrechen</button>
-      `;
-
-      document.body.appendChild(form);
-
-      document.getElementById('submitMarker').onclick = () => {
-        const name = document.getElementById('markerName').value;
-        const desc = document.getElementById('markerDesc').value;
-
-        if (!name.trim()) return alert('Bitte Name eingeben.');
-
-        alert(`Vorgeschlagen: ${name} @ X: ${x}, Y: ${y}`);
-        form.remove();
-      };
-
-      document.getElementById('cancelMarker').onclick = () => {
-        form.remove();
-      };
-    });
+    }
   </script>
 </body>
 </html>
