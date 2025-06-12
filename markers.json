@@ -3,78 +3,78 @@
     "name": "Guild Base",
     "coords": [47964, 19836],
     "description": "Frei für Gilde",
-    "type": "gilde"
+    "type": "grün"
   },
   {
     "name": "Charly's Base",
     "coords": [79500, 53100],
     "description": "offen für die Gilde",
-    "type": "player"
+    "type": "rot"
   },
   {
     "name": "FreeDive",
     "coords": [44448, 41318],
     "description": "Hauptbasis",
-    "type": "player"
+    "type": "rot"
   },
   {
     "name": "Yamo 1/Small Guild Base",
     "coords": [43328, 43104],
     "description": "Erste größere Base",
-    "type": "gilde"
+    "type": "grün"
   },
   {
     "name": "Yamo/Gilde 2 (groß)",
     "coords": [83136, 39456],
     "description": "Gilde groß",
-    "type": "gilde"
+    "type": "grün"
   },
   {
     "name": "Verso base",
     "coords": [69952, 61792],
     "description": "Zentral",
-    "type": "player"
+    "type": "rot"
   },
   {
     "name": "M's Base",
     "coords": [77520, 90894],
     "description": "Starter-Base",
-    "type": "player"
+    "type": "rot"
   },
   {
     "name": "Elathar Base",
     "coords": [41664, 48416],
     "description": "Mainbase",
-    "type": "player"
+    "type": "rot"
   },
   {
     "name": "Knorpelchen",
     "coords": [55936, 70016],
     "description": "Südwestliche Eisenwerke",
-    "type": "player"
+    "type": "rot"
   },
   {
     "name": "TheAntares Base",
     "coords": [68222, 54876],
     "description": "TheAntares Base",
-    "type": "player"
+    "type": "rot"
   },
   {
     "name": "Renko",
     "coords": [45700, 40500],
     "description": "Abreißbar falls es zu eng wird",
-    "type": "player"
+    "type": "rot"
   },
   {
     "name": "Startbase am Handelsposten",
     "coords": [59200, 82656],
     "description": "alles was hier drin ist kann genutzt werden",
-    "type": "player"
+    "type": "rot"
   },
   {
     "name": "3er Gilden-Base",
     "coords": [60208, 70237],
     "description": "Eine Basis von Shadow, Lyuien, Khartif",
-    "type": "player"
+    "type": "rot"
   }
 ]
