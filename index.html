@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="utf-8" />
-  <title>Interaktive Karte</title>
+  <title>Federkinder Karte</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
@@ -52,40 +52,6 @@
       border-radius: 5px;
       z-index: 1200;
     }
-    #suggestButton {
-      margin-top: 10px;
-      width: 100%;
-      padding: 8px;
-      background: #4caf50;
-      color: #fff;
-      border: none;
-      font-weight: bold;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    #suggestForm {
-      display: none;
-      margin-top: 10px;
-    }
-    #suggestForm input, #suggestForm textarea, #suggestForm select {
-      width: 100%;
-      margin-bottom: 5px;
-      padding: 6px;
-      box-sizing: border-box;
-    }
-    #suggestForm button {
-      background: #2196f3;
-      color: #fff;
-      border: none;
-      padding: 6px;
-      width: 100%;
-      border-radius: 4px;
-    }
-    #hint {
-      font-size: 0.85em;
-      color: #555;
-      margin-bottom: 5px;
-    }
   </style>
 </head>
 <body>
@@ -93,23 +59,6 @@
   <div id="sidebar">
     <h2>Marker Übersicht</h2>
     <div id="markerGroups"></div>
-
-    <button id="suggestButton">📍 Marker vorschlagen</button>
-    <div id="hint">Klicke auf die Karte, um X/Y-Koordinaten zu setzen.</div>
-
-    <form id="suggestForm">
-      <input type="text" id="markerName" placeholder="Name" required />
-      <textarea id="markerDescription" placeholder="Beschreibung" required></textarea>
-      <input type="text" id="markerX" placeholder="X-Koordinate" readonly />
-      <input type="text" id="markerY" placeholder="Y-Koordinate" readonly />
-      <select id="markerColor">
-        <option value="red">Rot</option>
-        <option value="green">Grün</option>
-        <option value="blue">Blau</option>
-        <option value="yellow">Gelb</option>
-      </select>
-      <button type="submit">Absenden</button>
-    </form>
   </div>
   <div id="coords" class="coords-box">X: –, Y: –</div>
 
@@ -136,7 +85,7 @@
       return map[colorName.toLowerCase()] || colorName;
     }
 
-    function createIcon(color) {
+    function createColorIcon(color) {
       return L.divIcon({
         className: '',
         html: `<svg width="10" height="10" viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg">
@@ -145,6 +94,20 @@
         iconSize: [10, 10],
         iconAnchor: [5, 5],
       });
+    }
+
+    function getIconForMarker(markerData) {
+      if (markerData.icon) {
+        return L.icon({
+          iconUrl: `icons/${markerData.icon}`,
+          iconSize: [32, 32],
+          iconAnchor: [16, 32],
+          popupAnchor: [0, -32]
+        });
+      } else {
+        const colorHex = colorNameToHex(markerData.color || 'gray');
+        return createColorIcon(colorHex);
+      }
     }
 
     fetch('markers.json')
@@ -164,8 +127,8 @@
           items.forEach(markerData => {
             const lat = mapSize - markerData.coords[1];
             const lng = markerData.coords[0];
-            const colorHex = colorNameToHex(markerData.color || fallbackColor);
-            const icon = createIcon(colorHex);
+            const icon = getIconForMarker(markerData);
+
             const marker = L.marker([lat, lng], { icon }).addTo(map)
               .bindPopup(`<strong>${markerData.name}</strong><br>${markerData.description}<br><em>X: ${markerData.coords[0]}, Y: ${markerData.coords[1]}</em>`);
 
@@ -192,53 +155,6 @@
         renderGroup('Gilden Basen', gildenBasen, '#1a9d37');
         renderGroup('Marker', andere, '#666');
       });
-
-    // Marker-Vorschlag
-    const suggestButton = document.getElementById('suggestButton');
-    const suggestForm = document.getElementById('suggestForm');
-    const markerX = document.getElementById('markerX');
-    const markerY = document.getElementById('markerY');
-
-    let lastClickCoords = null;
-    map.on('click', (e) => {
-      lastClickCoords = {
-        x: Math.round(e.latlng.lng),
-        y: Math.round(mapSize - e.latlng.lat),
-      };
-      markerX.value = lastClickCoords.x;
-      markerY.value = lastClickCoords.y;
-    });
-
-    suggestButton.onclick = () => {
-      suggestForm.style.display = suggestForm.style.display === 'none' ? 'block' : 'none';
-    };
-
-    suggestForm.onsubmit = async (e) => {
-      e.preventDefault();
-
-      const payload = {
-        name: document.getElementById('markerName').value,
-        description: document.getElementById('markerDescription').value,
-        x: parseInt(markerX.value),
-        y: parseInt(markerY.value),
-        color: document.getElementById('markerColor').value,
-      };
-
-      const response = await fetch('/api/submitMarker', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      if (response.ok) {
-        alert('Marker wurde vorgeschlagen!');
-        suggestForm.reset();
-        suggestForm.style.display = 'none';
-      } else {
-        const err = await response.json();
-        alert(`Fehler: ${err.error}`);
-      }
-    };
   </script>
 </body>
 </html>
