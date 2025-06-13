@@ -52,6 +52,29 @@
       border-radius: 5px;
       z-index: 1200;
     }
+    #suggestFormContainer {
+      position: fixed;
+      top: 80px;
+      right: 20px;
+      background: white;
+      border: 1px solid #ccc;
+      padding: 10px;
+      border-radius: 8px;
+      display: none;
+      z-index: 2000;
+    }
+    #toggleFormBtn {
+      position: fixed;
+      top: 20px;
+      right: 270px;
+      z-index: 2000;
+      background: #444;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -61,6 +84,21 @@
     <div id="markerGroups"></div>
   </div>
   <div id="coords" class="coords-box">X: –, Y: –</div>
+
+  <!-- Marker vorschlagen Button -->
+  <button id="toggleFormBtn">Marker vorschlagen</button>
+
+  <!-- Vorschlagsformular -->
+  <div id="suggestFormContainer">
+    <form id="suggestForm">
+      <input type="text" name="name" placeholder="Name" required><br><br>
+      <textarea name="description" placeholder="Beschreibung" required></textarea><br><br>
+      <input type="number" name="x" placeholder="X-Koordinate" required><br><br>
+      <input type="number" name="y" placeholder="Y-Koordinate" required><br><br>
+      <button type="submit">Absenden</button>
+      <button type="button" onclick="document.getElementById('suggestFormContainer').style.display='none'">Abbrechen</button>
+    </form>
+  </div>
 
   <script>
     const mapSize = 100000;
@@ -155,6 +193,42 @@
         renderGroup('Gilden Basen', gildenBasen, '#1a9d37');
         renderGroup('Marker', andere, '#666');
       });
+
+    // Formlogik
+    document.getElementById('toggleFormBtn').addEventListener('click', () => {
+      const form = document.getElementById('suggestFormContainer');
+      form.style.display = form.style.display === 'block' ? 'none' : 'block';
+    });
+
+    document.getElementById('suggestForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const data = {
+        name: form.name.value,
+        description: form.description.value,
+        x: parseFloat(form.x.value),
+        y: parseFloat(form.y.value)
+      };
+
+      try {
+        const res = await fetch('/api/submitMarker', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        if (res.ok) {
+          alert("Danke! Vorschlag wurde gesendet.");
+          form.reset();
+          document.getElementById('suggestFormContainer').style.display = 'none';
+        } else {
+          const err = await res.json();
+          alert("Fehler: " + (err?.error || 'Unbekannter Fehler'));
+        }
+      } catch (err) {
+        alert("Netzwerkfehler: " + err.message);
+      }
+    });
   </script>
 </body>
 </html>
