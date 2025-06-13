@@ -79,12 +79,6 @@
   },
   {
     "name": "Perways Base",
-    "coords": [41728, 47760],
-    "description": "Meine Basis",
-    "color": "red"
-  },
-  {
-    "name": "Perways Base",
     "coords": [46592, 33760],
     "description": "Wasseroase",
     "color": "red"
