@@ -3,7 +3,13 @@
     "name": "Guild Base",
     "coords": [27152, 29760],
     "description": "Frei für Gilde",
-    "icon": "harkonnen.png"
+    "color": "green"
+  },
+  {
+  "name": "Harko-Village",
+  "coords": [88096, 52976],
+  "description": "Harkonnen Base\n(fahrzeuge abgeben)",
+  "icon": "harkonnen.png"
   },
   {
     "name": "Charly's Base",
