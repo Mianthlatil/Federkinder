@@ -193,7 +193,7 @@
         renderGroup('Marker', andere, '#666');
       });
 
-    // Vorschlagsformular
+    // Marker-Vorschlag
     const suggestButton = document.getElementById('suggestButton');
     const suggestForm = document.getElementById('suggestForm');
     const markerX = document.getElementById('markerX');
@@ -215,32 +215,29 @@
 
     suggestForm.onsubmit = async (e) => {
       e.preventDefault();
+
       const payload = {
         name: document.getElementById('markerName').value,
         description: document.getElementById('markerDescription').value,
-        x: markerX.value,
-        y: markerY.value,
+        x: parseInt(markerX.value),
+        y: parseInt(markerY.value),
         color: document.getElementById('markerColor').value,
       };
 
-      const formatted = `\`\`\`json
-{
-  "name": "${payload.name}",
-  "coords": [${payload.x}, ${payload.y}],
-  "description": "${payload.description}",
-  "color": "${payload.color}"
-}
-\`\`\``;
-
-      await fetch('/api/submitMarker', {
+      const response = await fetch('/api/submitMarker', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: `📍 **Neuer Marker-Vorschlag**\n${formatted}` }),
+        body: JSON.stringify(payload),
       });
 
-      alert('Marker wurde vorgeschlagen!');
-      suggestForm.reset();
-      suggestForm.style.display = 'none';
+      if (response.ok) {
+        alert('Marker wurde vorgeschlagen!');
+        suggestForm.reset();
+        suggestForm.style.display = 'none';
+      } else {
+        const err = await response.json();
+        alert(`Fehler: ${err.error}`);
+      }
     };
   </script>
 </body>
