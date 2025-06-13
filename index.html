@@ -55,7 +55,7 @@
     #suggestFormContainer {
       position: fixed;
       top: 80px;
-      right: 20px;
+      right: 270px;
       background: white;
       border: 1px solid #ccc;
       padding: 10px;
@@ -64,37 +64,36 @@
       z-index: 2000;
     }
     #toggleFormBtn {
-      position: fixed;
-      top: 20px;
-      right: 270px;
-      z-index: 2000;
-      background: #444;
+      display: block;
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 8px;
+      background: #007bff;
       color: white;
       border: none;
-      padding: 8px 12px;
-      border-radius: 6px;
+      border-radius: 5px;
+      font-size: 14px;
       cursor: pointer;
     }
   </style>
 </head>
 <body>
   <div id="map"></div>
+
   <div id="sidebar">
+    <button id="toggleFormBtn">📍 Marker vorschlagen</button>
     <h2>Marker Übersicht</h2>
     <div id="markerGroups"></div>
   </div>
+
   <div id="coords" class="coords-box">X: –, Y: –</div>
 
-  <!-- Marker vorschlagen Button -->
-  <button id="toggleFormBtn">Marker vorschlagen</button>
-
-  <!-- Vorschlagsformular -->
   <div id="suggestFormContainer">
     <form id="suggestForm">
       <input type="text" name="name" placeholder="Name" required><br><br>
       <textarea name="description" placeholder="Beschreibung" required></textarea><br><br>
-      <input type="number" name="x" placeholder="X-Koordinate" required><br><br>
-      <input type="number" name="y" placeholder="Y-Koordinate" required><br><br>
+      <input type="number" name="x" id="inputX" placeholder="X-Koordinate" required><br><br>
+      <input type="number" name="y" id="inputY" placeholder="Y-Koordinate" required><br><br>
       <button type="submit">Absenden</button>
       <button type="button" onclick="document.getElementById('suggestFormContainer').style.display='none'">Abbrechen</button>
     </form>
@@ -111,6 +110,15 @@
       const x = e.latlng.lng.toFixed(1);
       const y = (mapSize - e.latlng.lat).toFixed(1);
       document.getElementById('coords').textContent = `X: ${x}, Y: ${y}`;
+    });
+
+    // 📌 Koordinaten in Formular setzen bei Klick
+    map.on('click', (e) => {
+      const x = e.latlng.lng.toFixed(1);
+      const y = (mapSize - e.latlng.lat).toFixed(1);
+      document.getElementById('inputX').value = x;
+      document.getElementById('inputY').value = y;
+      document.getElementById('suggestFormContainer').style.display = 'block';
     });
 
     const markerGroupsContainer = document.getElementById('markerGroups');
@@ -194,7 +202,6 @@
         renderGroup('Marker', andere, '#666');
       });
 
-    // Formlogik
     document.getElementById('toggleFormBtn').addEventListener('click', () => {
       const form = document.getElementById('suggestFormContainer');
       form.style.display = form.style.display === 'block' ? 'none' : 'block';
