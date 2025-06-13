@@ -6,7 +6,6 @@ export default async function handler(req, res) {
   }
 
   const { name, description, x, y, color = "red" } = req.body;
-
   const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
 
   if (!webhookUrl) {
