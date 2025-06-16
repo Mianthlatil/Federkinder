@@ -154,7 +154,18 @@
     "coords": [83896, 39168],
     "description": "GX Phoenix´s Base",
     "color": "red"
-  }
+  },
+  {
+  "name": "buggy",
+  "coords": [
+    38336,
+    18976
+  ],
+  "description": "123",
+  "color": "red",
+  "icon": "buggy icon"
+}
+```
   
   
 ]
