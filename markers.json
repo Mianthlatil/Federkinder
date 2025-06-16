@@ -1,7 +1,7 @@
 [
   {
     "name": "Guild Base",
-    "coords": [84448, 84448],
+    "coords": [27152, 29760],
     "description": "Frei für Gilde",
     "color": "green"
   },
@@ -31,8 +31,8 @@
   },
   {
     "name": "Yamo/Gilde 2 (groß)",
-    "coords": [83136, 39456],
-    "description": "Gilde groß",
+    "coords": [39456, 37824],
+    "description": "Eine Base Für die Ganze Gilde",
     "color": "green"
   },
   {
@@ -151,7 +151,7 @@
 },
   {
     "name": "GX Phoenix",
-    "coords": [27152, 29760],
+    "coords": [83136, 39456],
     "description": "GX Phoenix´s Base",
     "color": "red"
   }
