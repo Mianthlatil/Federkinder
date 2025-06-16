@@ -157,15 +157,11 @@
   },
   {
   "name": "buggy",
-  "coords": [
-    38336,
-    18976
-  ],
+  "coords": [38336, 18976],
   "description": "123",
   "color": "red",
   "icon": "buggy icon"
 }
-```
   
   
 ]
