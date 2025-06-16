@@ -94,5 +94,61 @@
     "coords": [53816, 22664],
     "description": "Alles was drin ist darf benutzt werden, Tor muss noch für Buggies optimiert werden",
     "color": "red"
-  }
+},
+  {
+  "name": "Schaddedanz",
+  "coords": [
+    77120,
+    53664
+  ],
+  "description": "Die Destille",
+  "color": "red"
+},
+  {
+  "name": "Dagarius Base",
+  "coords": [
+    78928,
+    58512
+  ],
+  "description": "Base von Dagarius und Nightmare",
+  "color": "red"
+},
+  {
+  "name": "3er Gilden-Base",
+  "coords": [
+    46613,
+    32304
+  ],
+  "description": "ShadowBroker80,Lyien, Spieler M, Lyien",
+  "color": "red"
+},
+  {
+  "name": "Harkonna Matata",
+  "coords": [
+    67360,
+    24512
+  ],
+  "description": "im Bau",
+  "color": "red"
+},
+  {
+  "name": "Save Spot",
+  "coords": [
+    33072,
+    65792
+  ],
+  "description": "Offen, nicht im Verseuchtem Gebiet\nSandsturmschutz",
+  "color": "red"
+},
+  {
+  "name": "TheAntare Base 2",
+  "coords": [
+    69204,
+    41516
+  ],
+  "description": "zweite Base, erste wird langsam verlassen.",
+  "color": "red"
+}
+  
+  
 ]
