@@ -160,7 +160,8 @@
       .then(res => res.json())
       .then(data => {
         const gildenBasen = data.filter(m => m.color === 'green');
-        const Andere = data.filter(m => m.color !== 'green');
+        const PlayerBasen = data.filter(m => m.color === 'red');
+        const POI = data.filter(m => m.color === 'black');
 
         function renderGroup(title, items, fallbackColor) {
           const h2 = document.createElement('h2');
@@ -200,6 +201,7 @@
 
         renderGroup('Gilden Basen', gildenBasen, '#1a9d37');
         renderGroup('Marker', andere, '#666');
+        renderGroup('POI', POI, '#000000');
       });
 
     document.getElementById('toggleFormBtn').addEventListener('click', () => {
