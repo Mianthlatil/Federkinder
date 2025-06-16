@@ -9,6 +9,7 @@
   "name": "Harko-Village",
   "coords": [88096, 52976],
   "description": "Harkonnen Base\n(fahrzeuge abgeben)",
+  "color": "black",
   "icon": "harkonnen.png"
   },
   {
@@ -159,7 +160,7 @@
   "name": "buggy",
   "coords": [38336, 18976],
   "description": "123",
-  "color": "red",
+  "color": "black",
   "icon": "buggy icon"
 }
   
