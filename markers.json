@@ -162,6 +162,24 @@
   "description": "123",
   "color": "black",
   "icon": "buggy icon"
+},
+{
+  "name": "fingier's Haupt Base",
+  "coords": [
+    51472,
+    6080
+  ],
+  "description": "Zweite/Neue Base",
+  "color": "red"
+},
+{
+  "name": "LordGumbaaa",
+  "coords": [
+    77628,
+    50540
+  ],
+  "description": "1st base.",
+  "color": "red"
 }
   
   
